@@ -1,0 +1,46 @@
+cabal-version: 1.12
+
+-- This file has been generated from package.yaml by hpack version 0.36.1.
+--
+-- see: https://github.com/sol/hpack
+
+name:           petros-core
+version:        0.0.1
+synopsis:       Standard library and Prelude replacement.
+description:    See https://hackage.haskell.org/package/petros-core/docs/Petros-Core.html
+category:       Prelude
+homepage:       https://github.com/FunctionalCore/petros#readme
+bug-reports:    https://github.com/FunctionalCore/petros/issues
+author:         James Burton
+maintainer:     james@functionalcore.dev
+copyright:      2023 James Burton
+license:        MPL-2.0
+license-file:   LICENSE
+build-type:     Simple
+extra-source-files:
+    readme.md
+
+source-repository head
+  type: git
+  location: https://github.com/FunctionalCore/petros
+
+library
+  exposed-modules:
+      Petros
+  other-modules:
+      Paths_petros_core
+  hs-source-dirs:
+      lib
+  default-extensions:
+      NoImplicitPrelude
+  ghc-options: -fhide-source-paths -Wall -Wcompat -Widentities -Wimplicit-prelude -Wredundant-constraints -Wmissing-export-lists -Wmissing-deriving-strategies -Wunused-packages -Winvalid-haddock -Wredundant-bang-patterns -Woperator-whitespace -Wredundant-strictness-flags -Wmissing-safe-haskell-mode -O1
+  build-depends:
+      base
+    , bytestring
+    , containers
+    , deepseq
+    , hashable
+    , text
+    , unliftio
+    , unordered-containers
+  default-language: GHC2021
