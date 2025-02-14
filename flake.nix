@@ -82,6 +82,9 @@
             "deepseq"
             "unliftio"
           ];
+          component.other-modules = [
+            "Petros.Internal.Basics"
+          ];
         };
 
         test = {
