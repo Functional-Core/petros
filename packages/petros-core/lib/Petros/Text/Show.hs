@@ -1,11 +1,25 @@
 {-# LANGUAGE Safe #-}
 
 module Petros.Text.Show
-    ( Show
+    ( module GHC.Show
     , show
     ) where
 
-import GHC.Show (Show ())
+import GHC.Show
+    ( Show (showList, showsPrec)
+    , ShowS
+    , shows
+    , showChar
+    , showString
+    , showMultiLineString
+    , showParen
+    , showList__
+    , showCommaSpace
+    , showLitChar
+    , showLitString
+    , protectEsc
+    , showSignedInt
+    )
 import GHC.Show qualified as Show
 import Petros.Binary
     ( ByteString
