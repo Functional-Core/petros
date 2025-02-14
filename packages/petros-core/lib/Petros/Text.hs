@@ -16,8 +16,7 @@ and
 https://www.snoyman.com/blog/2016/12/beware-of-readfile/
 -}
 module Petros.Text
-    ( module Data.String
-    , module Data.Text
+    ( module Data.Text
     , module Data.Text.Lazy
     , LText
     , isEmpty
@@ -44,10 +43,6 @@ module Petros.Text
     , unsafeCount
     ) where
 
-import Data.String
-    ( IsString (..)
-    , String
-    )
 import Data.Text
     ( Text
     , all
@@ -144,7 +139,7 @@ import Data.Text.Lazy
 
 import Data.Text qualified as T
 import Data.Text.Lazy qualified as LT
-import Petros.Internal.Basics 
+import Petros.Internal.Basics
 
 type LText = LT.Text
 
@@ -163,7 +158,7 @@ maybeHead = fmap fst . uncons
 unsafeTail :: Text -> Text
 unsafeTail = T.tail
 {-# INLINE unsafeTail #-}
- 
+
 maybeTail :: Text -> Maybe Text
 maybeTail = fmap snd . uncons
 {-# INLINE maybeTail #-}
