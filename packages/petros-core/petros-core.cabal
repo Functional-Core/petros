@@ -18,7 +18,7 @@ license:        MPL-2.0
 license-file:   LICENSE
 build-type:     Simple
 extra-source-files:
-    readme.md
+    README.md
 
 source-repository head
   type: git
@@ -27,8 +27,14 @@ source-repository head
 library
   exposed-modules:
       Petros
+      Petros.Binary
+      Petros.Experimental.Bob
+      Petros.Numeric
+      Petros.Text
+      Petros.Text.Char
+      Petros.Text.Read
   other-modules:
-      Paths_petros_core
+      Petros.Internal.Basics
   hs-source-dirs:
       lib
   default-extensions:
