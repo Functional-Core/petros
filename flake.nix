@@ -60,7 +60,7 @@
           maintainer = "james@functionalcore.dev";
           category = "Prelude";
           github = "FunctionalCore/petros";
-          extra-source-files = [ "readme.md" ];
+          extra-source-files = [ "README.md" ];
         };
       };
 
