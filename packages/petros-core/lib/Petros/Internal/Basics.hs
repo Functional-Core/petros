@@ -24,6 +24,8 @@ import Prelude as X
     , otherwise
     , snd
     , ($)
+    , (&&)
     , (.)
     , (<$>)
+    , (||)
     )
