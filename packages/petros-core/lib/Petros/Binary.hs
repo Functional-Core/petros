@@ -1,6 +1,9 @@
 {-# LANGUAGE Safe #-}
 
 -- TODO: Should this be called Petros.Bytes?
+-- ShortBS for if you need lots of small bytestrings
+-- kept for a long time to avoid heap fragmentation.
+-- Can also just run `copy` on a normal BS.
 module Petros.Binary
     ( module Data.ByteString
     , module Data.ByteString.Short
@@ -23,11 +26,6 @@ module Petros.Binary
     , unsafeMinimum
     , unsafeMaximum
     ) where
-
--- LBS Builder?
--- ShortBS for if you need lots of small bytestrings
--- kept for a long time to avoid heap fragmentation.
--- Can also just run `copy` on a normal BS.
 
 import Data.ByteString
     ( ByteString
@@ -120,11 +118,7 @@ import Data.ByteString qualified as B
 import Data.ByteString.Lazy qualified as LB (ByteString)
 import Data.ByteString.Short (ShortByteString, fromShort, toShort)
 
-import Data.Bool (Bool, otherwise)
-import Data.Function ((.))
-import Data.Functor (fmap)
-import Data.Maybe (Maybe (..))
-import Data.Tuple (fst, snd)
+import Petros.Internal.Basics
 import Petros.Numeric (UInt8)
 
 type LByteString = LB.ByteString
