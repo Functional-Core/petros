@@ -4,6 +4,7 @@ module Petros.Internal.Basics
     ( module X
     ) where
 
+import Data.Semigroup as X (Semigroup (..))
 import Prelude as X
     ( Applicative (..)
     , Bool (..)
@@ -28,4 +29,7 @@ import Prelude as X
     , (.)
     , (<$>)
     , (||)
+    , Monoid (..)
+    , Show ()
+    , Read ()
     )
