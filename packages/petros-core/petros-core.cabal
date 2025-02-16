@@ -33,6 +33,7 @@ library
       Petros.Numeric
       Petros.Numeric.Complex
       Petros.Text
+      Petros.Text.Builder
       Petros.Text.Char
       Petros.Text.Encoding
       Petros.Text.Parse
