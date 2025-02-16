@@ -30,9 +30,15 @@ library
       Petros.Binary
       Petros.Experimental.Bob
       Petros.Numeric
+      Petros.Numeric.Complex
       Petros.Text
       Petros.Text.Char
+      Petros.Text.Encoding
+      Petros.Text.Parse
+      Petros.Text.Parse.Result
       Petros.Text.Read
+      Petros.Text.Show
+      Petros.Text.String
   other-modules:
       Petros.Internal.Basics
   hs-source-dirs:
