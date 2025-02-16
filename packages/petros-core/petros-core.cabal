@@ -28,6 +28,7 @@ library
   exposed-modules:
       Petros
       Petros.Binary
+      Petros.Binary.Builder
       Petros.Experimental.Bob
       Petros.Numeric
       Petros.Numeric.Complex
