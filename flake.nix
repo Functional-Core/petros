@@ -81,6 +81,8 @@
             "hashable"
             "deepseq"
             "unliftio"
+            "time"
+            "semirings"
           ];
           component.other-modules = [
             "Petros.Internal.Basics"

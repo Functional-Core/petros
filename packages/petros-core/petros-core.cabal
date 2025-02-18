@@ -41,6 +41,11 @@ library
       Petros.Text.Read
       Petros.Text.Show
       Petros.Text.String
+      Petros.Time
+      Petros.Time.Calendar
+      Petros.Time.Calendar.Day
+      Petros.Time.Calendar.Month
+      Petros.Time.Calendar.Year
   other-modules:
       Petros.Internal.Basics
   hs-source-dirs:
@@ -54,7 +59,9 @@ library
     , containers
     , deepseq
     , hashable
+    , semirings
     , text
+    , time
     , unliftio
     , unordered-containers
   default-language: GHC2021
