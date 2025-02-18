@@ -18,8 +18,22 @@ module Petros.Time
 -- arbitrary formats for use when converting
 -- i.e. in the Tabor App.
 
-import Data.Time ()
-
+import Data.Time hiding
+    ( scaleCalendarDiffDays
+    , showGregorian
+    , getCurrentTime
+    , timeZoneOffsetString
+    , timeZoneOffsetString'
+    , getZonedTime
+    , utcToLocalZonedTime
+    , formatTime
+    , parseTimeM
+    , parseTimeMultipleM
+    , parseTimeOrError
+    , readSTime
+    , readPTime
+    )
+import Data.Time.Calendar.Quarter hiding ()
 import Data.Time.Format.ISO8601 (ISO8601)
 
 -- TODO:
