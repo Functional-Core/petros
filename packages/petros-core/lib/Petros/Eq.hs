@@ -33,7 +33,6 @@ module Petros.Eq
     , (/==.)
     ) where
 
-import Data.Complex (Complex)
 import Data.Functor.Identity
 import GHC.Generics
 import Prelude hiding (Eq (..))
@@ -269,11 +268,10 @@ instance GEq V1 where
 instance GEq U1 where
     geq _ _ = True
 
-instance (GEq f, GEq g, GHEq f g) => GEq (f :+: g) where
+instance (GEq f, GEq g) => GEq (f :+: g) where
     geq (L1 x) (L1 y) = geq x y
-    geq (L1 x) (R1 y) = gheq x y
-    geq (R1 x) (L1 y) = gheq y x
     geq (R1 x) (R1 y) = geq x y
+    geq _ _ = False
 
 instance (GEq f, GEq g) => GEq (f :*: g) where
     geq (x1 :*: y1) (x2 :*: y2) = geq x1 x2 && geq y1 y2
@@ -306,11 +304,11 @@ instance GHEq U1 g where
 instance GHEq f U1 where
     gheq _ _ = False
 
-instance (GHEq f g, GEq f, GEq g) => GHEq (f :+: g) (f :+: g) where
-    gheq (L1 x) (L1 y) = geq x y
+instance (GHEq f1 f2, GHEq f1 g2, GHEq g1 f2, GHEq g1 g2) => GHEq (f1 :+: g1) (f2 :+: g2) where
+    gheq (L1 x) (L1 y) = gheq x y
     gheq (L1 x) (R1 y) = gheq x y
-    gheq (R1 x) (L1 y) = gheq y x
-    gheq (R1 x) (R1 y) = geq x y
+    gheq (R1 x) (L1 y) = gheq x y
+    gheq (R1 x) (R1 y) = gheq x y
 
 instance (GHEq f1 g1, GHEq f2 g2) => GHEq (f1 :*: f2) (g1 :*: g2) where
     gheq (x1 :*: x2) (y1 :*: y2) = gheq x1 y1 && gheq x2 y2
@@ -334,7 +332,7 @@ deriving newtype instance (PartialEq a) => PartialEq (Sum a)
 deriving anyclass instance (PartialEq a) => PartialEq [a]
 deriving anyclass instance (PartialEq a) => PartialEq (NonEmpty a)
 deriving anyclass instance (PartialEq a) => PartialEq (Maybe a)
-deriving anyclass instance (PartialEq a, PartialEq b, PartialHEq a b) => PartialEq (Either a b)
+deriving anyclass instance (PartialEq a, PartialEq b) => PartialEq (Either a b)
 
 deriving anyclass instance (PartialEq a, PartialEq b) => PartialEq (a, b)
 deriving anyclass instance (PartialEq a, PartialEq b, PartialEq c) => PartialEq (a, b, c)
@@ -461,7 +459,9 @@ deriving anyclass instance
 
 instance (PartialEq a) => PartialHEq a a where
     heqPartial = eqPartial
+    {-# INLINE heqPartial #-}
     heqMaybe = eqMaybe
+    {-# INLINE heqMaybe #-}
 
 deriving anyclass instance (PartialHEq a b) => PartialHEq (Maybe a) (Maybe b)
 deriving anyclass instance (PartialHEq a c, PartialHEq a d, PartialHEq b c, PartialHEq b d) => PartialHEq (Either a b) (Either c d)
@@ -514,6 +514,7 @@ deriving anyclass instance
 -------------
 
 deriving anyclass instance (Eq a) => Eq (Maybe a)
+deriving anyclass instance (Eq a, Eq b) => Eq (Either a b)
 
 deriving anyclass instance (Eq a, Eq b) => Eq (a, b)
 deriving anyclass instance (Eq a, Eq b, Eq c) => Eq (a, b, c)
@@ -556,8 +557,9 @@ deriving anyclass instance
 
 instance (Eq a) => HEq a a where
     heq = eq
+    {-# INLINE heq #-}
 
-deriving anyclass instance (Eq a, Eq b, HEq a b) => Eq (Either a b)
+deriving anyclass instance (HEq a c, HEq a d, HEq b c, HEq b d) => HEq (Either a b) (Either c d)
 
 deriving anyclass instance
     (HEq a1 a2, HEq b1 b2)
@@ -609,10 +611,16 @@ newtype PreludeEq a = PreludeEq a
 
 instance (Prelude.Eq a) => PartialEq (PreludeEq a) where
     eqPartial = (Prelude.==)
+    {-# INLINE eqPartial #-}
     eqMaybe x y = Just $ (Prelude.==) x y
+    {-# INLINE eqMaybe #-}
 
 instance (Prelude.Eq a) => Eq (PreludeEq a) where
     eq = (Prelude.==)
+    {-# INLINE eq #-}
+
+deriving via (PreludeEq Ordering) instance PartialEq Ordering
+deriving via (PreludeEq Ordering) instance Eq Ordering
 
 -- deriving via (PreludeEq ByteArray) instance PartialEq ByteArray
 -- deriving via (PreludeEq Timeout) instance PartialEq Timeout
