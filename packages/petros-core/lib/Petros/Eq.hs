@@ -18,19 +18,14 @@ module Petros.Eq
     , (/~=)
     , PartialHEq (..)
     , (~==)
-    , (~==.)
     , (?==)
-    , (?==.)
     , (/~==)
-    , (/~==.)
     , Eq
     , (==)
     , (/=)
     , HEq
     , (===)
-    , (===.)
     , (/==)
-    , (/==.)
     ) where
 
 import Data.Functor.Identity
@@ -82,41 +77,17 @@ class PartialHEq a b where
     hneqPartial x y = not (heqPartial x y)
     {-# INLINE hneqPartial #-}
 
-heqPartial_ :: (PartialHEq a b) => b -> a -> Bool
-heqPartial_ = flip heqPartial
-{-# INLINE heqPartial_ #-}
-
-heqMaybe_ :: (PartialHEq a b) => b -> a -> Maybe Bool
-heqMaybe_ = flip heqMaybe
-{-# INLINE heqMaybe_ #-}
-
-hneqPartial_ :: (PartialHEq a b) => b -> a -> Bool
-hneqPartial_ = flip hneqPartial
-{-# INLINE hneqPartial_ #-}
-
 (~==) :: (PartialHEq a b) => a -> b -> Bool
 (~==) = heqPartial
 {-# INLINE (~==) #-}
-
-(~==.) :: (PartialHEq a b) => b -> a -> Bool
-(~==.) = heqPartial_
-{-# INLINE (~==.) #-}
 
 (?==) :: (PartialHEq a b) => a -> b -> Maybe Bool
 (?==) = heqMaybe
 {-# INLINE (?==) #-}
 
-(?==.) :: (PartialHEq a b) => b -> a -> Maybe Bool
-(?==.) = heqMaybe_
-{-# INLINE (?==.) #-}
-
 (/~==) :: (PartialHEq a b) => a -> b -> Bool
 (/~==) = hneqPartial
 {-# INLINE (/~==) #-}
-
-(/~==.) :: (PartialHEq a b) => b -> a -> Bool
-(/~==.) = hneqPartial_
-{-# INLINE (/~==.) #-}
 
 class (PartialEq a) => Eq a where
     eq :: a -> a -> Bool
@@ -146,29 +117,13 @@ class (PartialHEq a b) => HEq a b where
     hneq x y = not (heq x y)
     {-# INLINE hneq #-}
 
-heq_ :: (HEq a b) => b -> a -> Bool
-heq_ = flip heq
-{-# INLINE heq_ #-}
-
-hneq_ :: (HEq a b) => b -> a -> Bool
-hneq_ = flip hneq
-{-# INLINE hneq_ #-}
-
 (===) :: (HEq a b) => a -> b -> Bool
 (===) = heq
 {-# INLINE (===) #-}
 
-(===.) :: (HEq a b) => b -> a -> Bool
-(===.) = heq_
-{-# INLINE (===.) #-}
-
 (/==) :: (HEq a b) => a -> b -> Bool
 (/==) = hneq
 {-# INLINE (/==) #-}
-
-(/==.) :: (HEq a b) => b -> a -> Bool
-(/==.) = hneq_
-{-# INLINE (/==.) #-}
 
 ------------------------- Generic Instances -------------------------
 
