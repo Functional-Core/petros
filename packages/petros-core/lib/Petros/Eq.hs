@@ -5,7 +5,6 @@
 {-# LANGUAGE FunctionalDependencies #-}
 {-# LANGUAGE Trustworthy #-}
 {-# LANGUAGE TypeFamilies #-}
-{-# LANGUAGE UndecidableInstances #-}
 
 -- TODO:
 -- Add laws
@@ -13,19 +12,9 @@
 
 module Petros.Eq
     ( PartialEq (..)
-    , (~=)
-    , (?=)
-    , (/~=)
     , PartialHEq (..)
-    , (~==)
-    , (?==)
-    , (/~==)
-    , Eq
-    , (==)
-    , (/=)
-    , HEq
-    , (===)
-    , (/==)
+    , Eq (..)
+    , HEq (..)
     ) where
 
 import Data.Functor.Identity
@@ -36,94 +25,54 @@ import Data.Monoid
 import Data.List.NonEmpty (NonEmpty)
 
 class PartialEq a where
-    eqPartial :: a -> a -> Bool
-    default eqPartial :: (Generic a, GPartialEq (Rep a)) => a -> a -> Bool
-    eqPartial x y = geqPartial (from x) (from y)
-    {-# INLINE eqPartial #-}
+    (~=) :: a -> a -> Bool
+    default (~=) :: (Generic a, GPartialEq (Rep a)) => a -> a -> Bool
+    (~=) x y = geqPartial (from x) (from y)
+    {-# INLINE (~=) #-}
 
-    eqMaybe :: a -> a -> Maybe Bool
-    default eqMaybe :: (Generic a, GPartialEq (Rep a)) => a -> a -> Maybe Bool
-    eqMaybe x y = geqMaybe (from x) (from y)
-    {-# INLINE eqMaybe #-}
+    (==?) :: a -> a -> Maybe Bool
+    default (==?) :: (Generic a, GPartialEq (Rep a)) => a -> a -> Maybe Bool
+    (==?) x y = geqMaybe (from x) (from y)
+    {-# INLINE (==?) #-}
 
-    neqPartial :: a -> a -> Bool
-    neqPartial x y = not (eqPartial x y)
-    {-# INLINE neqPartial #-}
-
-(~=) :: (PartialEq a) => a -> a -> Bool
-(~=) = eqPartial
-{-# INLINE (~=) #-}
-
-(?=) :: (PartialEq a) => a -> a -> Maybe Bool
-(?=) = eqMaybe
-{-# INLINE (?=) #-}
-
-(/~=) :: (PartialEq a) => a -> a -> Bool
-(/~=) = neqPartial
-{-# INLINE (/~=) #-}
+    (/~=) :: a -> a -> Bool
+    (/~=) x y = not (x ~= y)
+    {-# INLINE (/~=) #-}
 
 class PartialHEq a b where
-    heqPartial :: a -> b -> Bool
-    default heqPartial :: (Generic a, Generic b, GPartialHeq (Rep a) (Rep b)) => a -> b -> Bool
-    heqPartial x y = gheqPartial (from x) (from y)
-    {-# INLINE heqPartial #-}
+    (~==) :: a -> b -> Bool
+    default (~==) :: (Generic a, Generic b, GPartialHeq (Rep a) (Rep b)) => a -> b -> Bool
+    (~==) x y = gheqPartial (from x) (from y)
+    {-# INLINE (~==) #-}
 
-    heqMaybe :: a -> b -> Maybe Bool
-    default heqMaybe :: (Generic a, Generic b, GPartialHeq (Rep a) (Rep b)) => a -> b -> Maybe Bool
-    heqMaybe x y = gheqMaybe (from x) (from y)
-    {-# INLINE heqMaybe #-}
+    (===?) :: a -> b -> Maybe Bool
+    default (===?) :: (Generic a, Generic b, GPartialHeq (Rep a) (Rep b)) => a -> b -> Maybe Bool
+    (===?) x y = gheqMaybe (from x) (from y)
+    {-# INLINE (===?) #-}
 
-    hneqPartial :: a -> b -> Bool
-    hneqPartial x y = not (heqPartial x y)
-    {-# INLINE hneqPartial #-}
-
-(~==) :: (PartialHEq a b) => a -> b -> Bool
-(~==) = heqPartial
-{-# INLINE (~==) #-}
-
-(?==) :: (PartialHEq a b) => a -> b -> Maybe Bool
-(?==) = heqMaybe
-{-# INLINE (?==) #-}
-
-(/~==) :: (PartialHEq a b) => a -> b -> Bool
-(/~==) = hneqPartial
-{-# INLINE (/~==) #-}
+    (/~==) :: a -> b -> Bool
+    (/~==) x y = not (x ~== y)
+    {-# INLINE (/~==) #-}
 
 class (PartialEq a) => Eq a where
-    eq :: a -> a -> Bool
-    default eq :: (Generic a, GEq (Rep a)) => a -> a -> Bool
-    eq x y = geq (from x) (from y)
-    {-# INLINE eq #-}
+    (==) :: a -> a -> Bool
+    default (==) :: (Generic a, GEq (Rep a)) => a -> a -> Bool
+    (==) x y = geq (from x) (from y)
+    {-# INLINE (==) #-}
 
-    neq :: a -> a -> Bool
-    neq x y = not (eq x y)
-    {-# INLINE neq #-}
-
-(==) :: (Eq a) => a -> a -> Bool
-(==) = eq
-{-# INLINE (==) #-}
-
-(/=) :: (Eq a) => a -> a -> Bool
-(/=) = neq
-{-# INLINE (/=) #-}
+    (/=) :: a -> a -> Bool
+    (/=) x y = not (x == y)
+    {-# INLINE (/=) #-}
 
 class (PartialHEq a b) => HEq a b where
-    heq :: a -> b -> Bool
-    default heq :: (Generic a, Generic b, GHEq (Rep a) (Rep b)) => a -> b -> Bool
-    heq x y = gheq (from x) (from y)
-    {-# INLINE heq #-}
+    (===) :: a -> b -> Bool
+    default (===) :: (Generic a, Generic b, GHEq (Rep a) (Rep b)) => a -> b -> Bool
+    (===) x y = gheq (from x) (from y)
+    {-# INLINE (===) #-}
 
-    hneq :: a -> b -> Bool
-    hneq x y = not (heq x y)
-    {-# INLINE hneq #-}
-
-(===) :: (HEq a b) => a -> b -> Bool
-(===) = heq
-{-# INLINE (===) #-}
-
-(/==) :: (HEq a b) => a -> b -> Bool
-(/==) = hneq
-{-# INLINE (/==) #-}
+    (/==) :: a -> b -> Bool
+    (/==) x y = not (x === y)
+    {-# INLINE (/==) #-}
 
 ------------------------- Generic Instances -------------------------
 
@@ -154,8 +103,8 @@ instance (GPartialEq f, GPartialEq g) => GPartialEq (f :*: g) where
     geqMaybe (x1 :*: y1) (x2 :*: y2) = liftA2 (&&) (geqMaybe x1 x2) (geqMaybe y1 y2)
 
 instance (PartialEq c) => GPartialEq (K1 i c) where
-    geqPartial (K1 x) (K1 y) = eqPartial x y
-    geqMaybe (K1 x) (K1 y) = eqMaybe x y
+    geqPartial (K1 x) (K1 y) = x ~= y
+    geqMaybe (K1 x) (K1 y) = x ==? y
 
 instance (GPartialEq f) => GPartialEq (M1 i t f) where
     geqPartial (M1 x) (M1 y) = geqPartial x y
@@ -206,8 +155,8 @@ instance (GPartialHeq f g, GPartialHeq f2 g2) => GPartialHeq (f :*: f2) (g :*: g
     gheqMaybe (x1 :*: x2) (y1 :*: y2) = liftA2 (&&) (gheqMaybe x1 y1) (gheqMaybe x2 y2)
 
 instance (PartialHEq c d) => GPartialHeq (K1 i c) (K1 j d) where
-    gheqPartial (K1 x) (K1 y) = heqPartial x y
-    gheqMaybe (K1 x) (K1 y) = heqMaybe x y
+    gheqPartial (K1 x) (K1 y) = x ~== y
+    gheqMaybe (K1 x) (K1 y) = x ===? y
 
 instance (GPartialHeq f g) => GPartialHeq (M1 i t f) (M1 j u g) where
     gheqPartial (M1 x) (M1 y) = gheqPartial x y
@@ -232,7 +181,7 @@ instance (GEq f, GEq g) => GEq (f :*: g) where
     geq (x1 :*: y1) (x2 :*: y2) = geq x1 x2 && geq y1 y2
 
 instance (Eq c) => GEq (K1 i c) where
-    geq (K1 x) (K1 y) = eq x y
+    geq (K1 x) (K1 y) = x == y
 
 instance (GEq f) => GEq (M1 i t f) where
     geq (M1 x) (M1 y) = geq x y
@@ -269,7 +218,7 @@ instance (GHEq f1 g1, GHEq f2 g2) => GHEq (f1 :*: f2) (g1 :*: g2) where
     gheq (x1 :*: x2) (y1 :*: y2) = gheq x1 y1 && gheq x2 y2
 
 instance (HEq c d) => GHEq (K1 i c) (K1 j d) where
-    gheq (K1 x) (K1 y) = heq x y
+    gheq (K1 x) (K1 y) = x === y
 
 instance (GHEq f g) => GHEq (M1 i t f) (M1 j u g) where
     gheq (M1 x) (M1 y) = gheq x y
@@ -413,10 +362,10 @@ deriving anyclass instance
 --------------
 
 instance (PartialEq a) => PartialHEq a a where
-    heqPartial = eqPartial
-    {-# INLINE heqPartial #-}
-    heqMaybe = eqMaybe
-    {-# INLINE heqMaybe #-}
+    (~==) = (~=)
+    {-# INLINE (~==) #-}
+    (===?) = (==?)
+    {-# INLINE (===?) #-}
 
 deriving anyclass instance (PartialHEq a b) => PartialHEq (Maybe a) (Maybe b)
 deriving anyclass instance (PartialHEq a c, PartialHEq a d, PartialHEq b c, PartialHEq b d) => PartialHEq (Either a b) (Either c d)
@@ -511,8 +460,8 @@ deriving anyclass instance
 -------------
 
 instance (Eq a) => HEq a a where
-    heq = eq
-    {-# INLINE heq #-}
+    (===) = (==)
+    {-# INLINE (===) #-}
 
 deriving anyclass instance (HEq a c, HEq a d, HEq b c, HEq b d) => HEq (Either a b) (Either c d)
 
@@ -565,14 +514,14 @@ newtype PreludeEq a = PreludeEq a
     deriving stock (Prelude.Eq)
 
 instance (Prelude.Eq a) => PartialEq (PreludeEq a) where
-    eqPartial = (Prelude.==)
-    {-# INLINE eqPartial #-}
-    eqMaybe x y = Just $ (Prelude.==) x y
-    {-# INLINE eqMaybe #-}
+    (~=) = (Prelude.==)
+    {-# INLINE (~=) #-}
+    (==?) x y = Just $ (Prelude.==) x y
+    {-# INLINE (==?) #-}
 
 instance (Prelude.Eq a) => Eq (PreludeEq a) where
-    eq = (Prelude.==)
-    {-# INLINE eq #-}
+    (==) = (Prelude.==)
+    {-# INLINE (==) #-}
 
 deriving via (PreludeEq Ordering) instance PartialEq Ordering
 deriving via (PreludeEq Ordering) instance Eq Ordering
