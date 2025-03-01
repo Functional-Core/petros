@@ -111,7 +111,7 @@ instance (GPartialOrd f, GPartialOrd g) => GPartialOrd (f :+: g) where
 
 instance (GPartialOrd f, GPartialOrd g) => GPartialOrd (f :*: g) where
     gcmpPartial (x1 :*: y1) (x2 :*: y2) =
-        if ordx == ordy || ordy == Just EQ -- TODO: Do we want the EQ bit?
+        if ordx == ordy || ordy == Just EQ
             then ordx
             else Nothing
         where
@@ -155,13 +155,23 @@ newtype Lex a = Lex a
 class GLexPartialOrd f where
     gcmpLexPartial :: f a -> f a -> Maybe Ordering
 
--- TODO:
--- This implementation will only compare top level products
--- lexicographically. If we want the lex behaviour to cascade
--- down we should recurse on a GLexPartialOrd instance instead.
-instance (GPartialOrd f, GPartialOrd g) => GLexPartialOrd (f :*: g) where
+instance GLexPartialOrd V1 where
+    gcmpLexPartial = undefined
+
+instance GLexPartialOrd U1 where
+    gcmpLexPartial _ _ = Just EQ
+
+instance (GLexPartialOrd f, GLexPartialOrd g) => GLexPartialOrd (f :+: g) where
+    gcmpLexPartial (L1 x) (L1 y) = gcmpLexPartial x y
+    gcmpLexPartial (R1 x) (R1 y) = gcmpLexPartial x y
+    gcmpLexPartial _ _ = Nothing
+
+instance (GLexPartialOrd f, GLexPartialOrd g) => GLexPartialOrd (f :*: g) where
     gcmpLexPartial (x1 :*: y1) (x2 :*: y2) =
-        gcmpPartial x1 x2 <|> gcmpPartial y1 y2
+        gcmpLexPartial x1 x2 <|> gcmpLexPartial y1 y2
+
+instance (PartialOrd c) => GLexPartialOrd (K1 i c) where
+    gcmpLexPartial (K1 x) (K1 y) = cmpPartial x y
 
 instance (GLexPartialOrd c) => GLexPartialOrd (M1 i j c) where
     gcmpLexPartial (M1 x) (M1 y) = gcmpLexPartial x y
@@ -181,6 +191,11 @@ instance (GOrd f, GOrd g) => GLexOrd (f :*: g) where
 
 instance (GLexOrd c) => GLexOrd (M1 i j c) where
     gcmpLex (M1 x) (M1 y) = gcmpLex x y
+    
+--------------------------------------------------
+-- Lexicographical ordering
+--------------------------------------------------
+
 
 --------------------------------------------------
 -- Instances
