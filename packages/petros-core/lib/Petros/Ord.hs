@@ -135,7 +135,7 @@ instance GOrd V1 where
 instance GOrd U1 where
     gcmp _ _ = EQ
 
--- There is no instance for (:+:) or (:+:) due
+-- There is no instance for (:+:) or (:*:) due
 -- to there always being incomparable cases.
 
 instance (Ord c) => GOrd (K1 i c) where
@@ -147,10 +147,6 @@ instance (GOrd c) => GOrd (M1 i j c) where
 --------------------------------------------------
 -- Lexicographical ordering
 --------------------------------------------------
-
-newtype Lex a = Lex a
-    deriving stock (Generic)
-    deriving newtype (Show, PartialEq, Eq)
 
 class GLexPartialOrd f where
     gcmpLexPartial :: f a -> f a -> Maybe Ordering
@@ -176,26 +172,80 @@ instance (PartialOrd c) => GLexPartialOrd (K1 i c) where
 instance (GLexPartialOrd c) => GLexPartialOrd (M1 i j c) where
     gcmpLexPartial (M1 x) (M1 y) = gcmpLexPartial x y
 
-instance (PartialEq a, Generic a, GLexPartialOrd (Rep a)) => PartialOrd (Lex a) where
-    cmpPartial (Lex x) (Lex y) = gcmpLexPartial (from x) (from y)
-
 class GLexOrd f where
     gcmpLex :: f a -> f a -> Ordering
 
-instance (GOrd f, GOrd g) => GLexOrd (f :*: g) where
+instance GLexOrd V1 where
+    gcmpLex = undefined
+
+instance GLexOrd U1 where
+    gcmpLex _ _ = EQ
+
+-- Note we cannot provide a total ordering for sum types
+-- since we cannot compare lefts with rights.
+
+instance (GLexOrd f, GLexOrd g) => GLexOrd (f :*: g) where
     gcmpLex (x1 :*: y1) (x2 :*: y2) =
         if ordx == EQ then ordy else ordx
         where
-            ordx = gcmp x1 x2
-            ordy = gcmp y1 y2
+            ordx = gcmpLex x1 x2
+            ordy = gcmpLex y1 y2
+
+instance (Ord c) => GLexOrd (K1 i c) where
+    gcmpLex (K1 x) (K1 y) = cmp x y
 
 instance (GLexOrd c) => GLexOrd (M1 i j c) where
     gcmpLex (M1 x) (M1 y) = gcmpLex x y
-    
+
+newtype Lex a = Lex a
+    deriving stock (Generic)
+    deriving newtype (Show, PartialEq, Eq)
+
+instance (PartialEq a, Generic a, GLexPartialOrd (Rep a)) => PartialOrd (Lex a) where
+    cmpPartial (Lex x) (Lex y) = gcmpLexPartial (from x) (from y)
+
+instance (Eq a, Generic a, GLexPartialOrd (Rep a), GLexOrd (Rep a)) => Ord (Lex a) where
+    cmp (Lex x) (Lex y) = gcmpLex (from x) (from y)
+  
 --------------------------------------------------
--- Lexicographical ordering
+-- Strict ordering
 --------------------------------------------------
 
+class GStrictPartialOrd f where
+    gcmpStrictPartial :: (f a) -> (f a) -> Maybe Ordering
+
+instance GStrictPartialOrd V1 where
+    gcmpStrictPartial = undefined
+
+instance GStrictPartialOrd U1 where
+    gcmpStrictPartial _ _ = Just EQ
+
+instance (GStrictPartialOrd f, GStrictPartialOrd g) => GStrictPartialOrd (f :+: g) where
+    gcmpStrictPartial (L1 x) (L1 y) = gcmpStrictPartial x y
+    gcmpStrictPartial (R1 x) (R1 y) = gcmpStrictPartial x y
+    gcmpStrictPartial _ _ = Nothing
+
+instance (GStrictPartialOrd f, GStrictPartialOrd g) => GStrictPartialOrd (f :*: g) where
+    gcmpStrictPartial (x1 :*: y1) (x2 :*: y2) =
+        if ordx == ordy
+            then ordx
+            else Nothing
+        where
+            ordx = gcmpStrictPartial x1 x2
+            ordy = gcmpStrictPartial y1 y2
+
+instance (PartialOrd c) => GStrictPartialOrd (K1 i c) where
+    gcmpStrictPartial (K1 x) (K1 y) = cmpPartial x y
+
+instance (GStrictPartialOrd c) => GStrictPartialOrd (M1 i j c) where
+    gcmpStrictPartial (M1 x) (M1 y) = gcmpStrictPartial x y
+
+newtype Strict a = Strict a
+    deriving stock (Generic)
+    deriving newtype (Show, PartialEq, Eq)
+
+instance (Generic a, PartialEq a, GStrictPartialOrd (Rep a)) => PartialOrd (Strict a) where
+    cmpPartial (Strict x) (Strict y) = gcmpStrictPartial (from x) (from y)
 
 --------------------------------------------------
 -- Instances
