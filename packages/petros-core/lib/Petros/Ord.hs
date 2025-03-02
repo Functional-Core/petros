@@ -1,12 +1,15 @@
-{-# LANGUAGE Trustworthy #-}
+{-# LANGUAGE Safe #-}
 
-module Petros.Ord 
-    ( module X
+module Petros.Ord
+    ( PartialOrd (..)
+    , (<=>?)
+    , Ord (..)
+    , (<=>)
     , Lex (..)
     , Strict (..)
     ) where
 
-import Petros.Ord.Ord as X
-import Petros.Ord.PartialOrd as X
 import Petros.Ord.Lex
+import Petros.Ord.Ord
+import Petros.Ord.PartialOrd
 import Petros.Ord.Strict
