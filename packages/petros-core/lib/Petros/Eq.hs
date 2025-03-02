@@ -23,6 +23,7 @@ import Prelude hiding (Eq (..))
 import Prelude qualified (Eq (..))
 import Data.Monoid
 import Data.List.NonEmpty (NonEmpty)
+import Petros.Internal
 
 class PartialEq a where
     (~=) :: a -> a -> Bool
@@ -510,21 +511,18 @@ deriving anyclass instance
 
 --------------------------------------------------------------------------
 
-newtype PreludeEq a = PreludeEq a
-    deriving stock (Prelude.Eq)
-
-instance (Prelude.Eq a) => PartialEq (PreludeEq a) where
-    (~=) = (Prelude.==)
+instance (Prelude.Eq a) => PartialEq (FromPrelude a) where
+    (~=) = liftPrelude2 (Prelude.==)
     {-# INLINE (~=) #-}
-    (==?) x y = Just $ (Prelude.==) x y
+    (==?) x y = Just $ liftPrelude2 (Prelude.==) x y
     {-# INLINE (==?) #-}
 
-instance (Prelude.Eq a) => Eq (PreludeEq a) where
-    (==) = (Prelude.==)
+instance (Prelude.Eq a) => Eq (FromPrelude a) where
+    (==) = liftPrelude2 (Prelude.==)
     {-# INLINE (==) #-}
 
-deriving via (PreludeEq Ordering) instance PartialEq Ordering
-deriving via (PreludeEq Ordering) instance Eq Ordering
+deriving via (FromPrelude Ordering) instance PartialEq Ordering
+deriving via (FromPrelude Ordering) instance Eq Ordering
 
 -- deriving via (PreludeEq ByteArray) instance PartialEq ByteArray
 -- deriving via (PreludeEq Timeout) instance PartialEq Timeout

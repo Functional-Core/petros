@@ -24,8 +24,10 @@ module Petros.Ord.Lex
 import Control.Applicative ((<|>))
 import GHC.Generics
 import Petros.Eq
-import Petros.Ord (Ord, PartialOrd)
-import Petros.Ord qualified as Ord
+import Petros.Ord.Ord (Ord)
+import Petros.Ord.Ord qualified as Ord
+import Petros.Ord.PartialOrd (PartialOrd)
+import Petros.Ord.PartialOrd qualified as Ord
 import Prelude hiding (Eq (..), Ord (..))
 
 --------------------------------------------------
