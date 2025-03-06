@@ -1,24 +1,28 @@
-{-# LANGUAGE Trustworthy #-}
 {-# LANGUAGE TemplateHaskell #-}
+{-# LANGUAGE Trustworthy #-}
 
 module Main (main) where
 
-import Prelude hiding (Eq (..))
-import Test.Petros.Eq
-import Test.Hspec
+import Control.Arrow (Arrow)
 import Language.Haskell.TH
 import Petros.Eq
-import Control.Arrow (Arrow)
+import Test.Generators (runTestGenClass)
+import Test.Hspec
+import Test.Petros.Eq
+import Test.QuickCheck
+import Prelude hiding (Eq (..))
+import Control.Monad.Identity (Identity)
+import Data.Semigroup
+import Petros.Eq.PartialEq qualified
+import Test.Hspec.QuickCheck
 
 main :: IO ()
 main = do
-    putStrLn "........"
-    putStrLn $(stringE . show =<< testClass ''Eq)
-    -- putStrLn $(stringE . show =<< testDummy)
-    -- putStrLn $(stringE . show =<< testEq)
-    putStrLn "........"
-    -- putStrLn $(stringE . show =<< testReify)
-    -- putStrLn $(stringE . show =<< testEq)
-    -- hspec $(runTestGenClass testEnv ''Eq)
+    -- putStrLn "........"
+    -- putStrLn $(stringE . show =<< testClass ''Dummy)
+    -- putStrLn $(stringE . show =<< testInsts ''Dummy)
+    -- putStrLn $(stringE . show =<< test)
+    -- putStrLn "........"
+    -- putStrLn $(stringE . pprint =<< runTestGenClass testEnv ''PartialEq)
+    hspec $(runTestGenClass testEnv ''PartialEq)
     putStrLn "Test suite not yet implemented"
-
