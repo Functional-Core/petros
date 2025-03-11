@@ -79,5 +79,7 @@ liftStrict op x y = (Strict x) `op` (Strict y)
 {-# INLINE (>=.) #-}
 {-# INLINE (>/<) #-}
 
+infix 4 <., <=., >., >=., >/<
+
 cmpPartial :: (StrictPartialOrd a) => a -> a -> Maybe Ordering
 cmpPartial = liftStrict Ord.cmpPartial

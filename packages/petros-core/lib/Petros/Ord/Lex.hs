@@ -113,6 +113,8 @@ liftLex op x y = (Lex x) `op` (Lex y)
 {-# INLINE (>=.) #-}
 {-# INLINE (>/<) #-}
 
+infixr 4 <., <=., >., >=., >/<
+
 cmpPartial :: (LexPartialOrd a) => a -> a -> Maybe Ordering
 cmpPartial = liftLex Ord.cmpPartial
 {-# INLINE cmpPartial #-}
@@ -128,6 +130,8 @@ type LexOrd a = (Eq_ a, Generic a, GLexOrd (Rep a), GLexPartialOrd (Rep a))
 {-# INLINE (<=) #-}
 {-# INLINE (>) #-}
 {-# INLINE (>=) #-}
+
+infixr 4 <, <=, >, >=
 
 min, max :: (LexOrd a) => a -> a -> a
 min x y = unlex $ liftLex (Ord.min) x y
