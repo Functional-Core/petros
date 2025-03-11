@@ -37,6 +37,7 @@ library
       Petros.Eq.PartialEq
       Petros.Experimental.Bob
       Petros.Internal
+      Petros.Law
       Petros.Numeric
       Petros.Numeric.Complex
       Petros.Numeric.Types
