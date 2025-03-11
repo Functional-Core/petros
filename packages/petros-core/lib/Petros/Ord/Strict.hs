@@ -1,6 +1,7 @@
 {-# LANGUAGE DerivingStrategies #-}
 {-# LANGUAGE Trustworthy #-}
 {-# LANGUAGE UndecidableInstances #-}
+{-# LANGUAGE DeriveAnyClass #-}
 
 module Petros.Ord.Strict
     ( Strict (..)
@@ -54,7 +55,8 @@ instance (GStrictPartialOrd c) => GStrictPartialOrd (M1 i j c) where
 
 newtype Strict a = Strict a
     deriving stock (Generic)
-    deriving newtype (Show, PartialEq, Eq)
+    deriving newtype (Show)
+    deriving anyclass (PartialHEq (Strict a), HEq (Strict a))
 
 instance (Generic a, PartialEq a, GStrictPartialOrd (Rep a)) => PartialOrd (Strict a) where
     cmpPartial (Strict x) (Strict y) = gcmpStrictPartial (from x) (from y)

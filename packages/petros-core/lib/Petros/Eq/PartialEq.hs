@@ -1,7 +1,8 @@
 {-# LANGUAGE DefaultSignatures #-}
 {-# LANGUAGE DeriveAnyClass #-}
 {-# LANGUAGE DerivingStrategies #-}
-{-# LANGUAGE Safe #-}
+{-# LANGUAGE Trustworthy #-}
+{-# LANGUAGE DerivingVia #-}
 
 module Petros.Eq.PartialEq
     ( PartialHEq (..)
@@ -13,6 +14,8 @@ module Petros.Eq.PartialEq
 
 import GHC.Generics
 import Prelude hiding (Eq (..))
+import Prelude qualified
+import Petros.Internal
 
 class PartialHEq a b where
     (~==) :: a -> b -> Bool
@@ -97,6 +100,22 @@ instance (PartialHEq c d) => GPartialHeq (K1 i c) (K1 j d) where
 instance (GPartialHeq f g) => GPartialHeq (M1 i t f) (M1 j u g) where
     gheqPartial (M1 x) (M1 y) = gheqPartial x y
     gheqMaybe (M1 x) (M1 y) = gheqMaybe x y
+
+--------------------------------------------------------------------------
+
+instance (Prelude.Eq a) => PartialHEq (FromPrelude a) (FromPrelude a) where
+    (~==) = liftPrelude2 (Prelude.==)
+    x ===? y = Just $ liftPrelude2 (Prelude.==) x y
+
+instance (Prelude.Eq a) => PartialHEq a (FromPrelude a) where
+    x ~== y = liftPrelude (x Prelude.==) y
+    x ===? y = Just $ liftPrelude (x Prelude.==) y
+
+instance (Prelude.Eq a) => PartialHEq (FromPrelude a) a where
+    x ~== y = liftPrelude (Prelude.== y) x
+    x ===? y = Just $ liftPrelude (Prelude.== y) x
+
+deriving via (FromPrelude Ordering) instance PartialHEq Ordering Ordering
 
 --------------------------------------------------------------------------
 

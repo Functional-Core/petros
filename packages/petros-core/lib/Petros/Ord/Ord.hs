@@ -1,5 +1,6 @@
 {-# LANGUAGE Trustworthy #-}
 {-# LANGUAGE DerivingVia #-}
+{-# LANGUAGE UndecidableInstances #-}
 
 module Petros.Ord.Ord
     ( Ord (..)
@@ -71,5 +72,3 @@ instance (GOrd c) => GOrd (M1 i j c) where
 
 instance (Prelude.Ord a, Eq a, PartialOrd a) => Ord (FromPrelude a) where
     cmp = liftPrelude2 Prelude.compare
-
-

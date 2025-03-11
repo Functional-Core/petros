@@ -1,7 +1,8 @@
 {-# LANGUAGE DefaultSignatures #-}
 {-# LANGUAGE DerivingStrategies #-}
-{-# LANGUAGE Safe #-}
+{-# LANGUAGE Trustworthy #-}
 {-# LANGUAGE DeriveAnyClass #-}
+{-# LANGUAGE DerivingVia #-}
 
 module Petros.Eq.Eq
     ( HEq (..)
@@ -13,6 +14,8 @@ module Petros.Eq.Eq
 import GHC.Generics
 import Petros.Eq.PartialEq
 import Prelude hiding (Eq (..))
+import Prelude qualified
+import Petros.Internal
 
 class (PartialHEq a b) => HEq a b where
     (===) :: a -> b -> Bool
@@ -51,7 +54,6 @@ instance GHEq f V1 where
 
 instance {-# OVERLAPPING #-} GHEq U1 U1 where
     gheq _ _ = True
-
 instance GHEq U1 g where
     gheq _ _ = False
 
@@ -75,6 +77,20 @@ instance (GHEq f g) => GHEq (M1 i t f) (M1 j u g) where
 
 --------------------------------------------------------------------------
 
+instance (Prelude.Eq a) => HEq a (FromPrelude a) where
+    x === y = liftPrelude (x Prelude.==) y
+
+instance (Prelude.Eq a) => HEq (FromPrelude a) a where
+    x === y = liftPrelude (Prelude.== y) x
+    
+instance (Prelude.Eq a) => HEq (FromPrelude a) (FromPrelude a) where
+    (===) = liftPrelude2 (Prelude.==)
+
+deriving via (FromPrelude Ordering) instance HEq Ordering Ordering
+
+--------------------------------------------------------------------------
+
+deriving anyclass instance (HEq a b) => HEq (Maybe a) (Maybe b)
 deriving anyclass instance (HEq a c, HEq a d, HEq b c, HEq b d) => HEq (Either a b) (Either c d)
 
 deriving anyclass instance

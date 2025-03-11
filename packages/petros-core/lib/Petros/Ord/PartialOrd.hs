@@ -12,7 +12,7 @@ module Petros.Ord.PartialOrd (
 import Petros.Eq
 import Prelude hiding (Ord (..), Eq (..))
 import GHC.Generics
-import Prelude qualified (Eq (..), Ord (..))
+import Prelude qualified (Ord (..))
 import Petros.Internal
 
 class (PartialEq a) => PartialOrd a where
