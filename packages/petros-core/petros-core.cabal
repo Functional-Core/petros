@@ -13,7 +13,7 @@ homepage:       https://github.com/FunctionalCore/petros#readme
 bug-reports:    https://github.com/FunctionalCore/petros/issues
 author:         James Burton
 maintainer:     james@functionalcore.dev
-copyright:      2023 James Burton
+copyright:      2025 James Burton
 license:        MPL-2.0
 license-file:   LICENSE
 build-type:     Simple
@@ -27,11 +27,25 @@ source-repository head
 library
   exposed-modules:
       Petros
+      Petros.Algebra.Group
+      Petros.Algebra.Ring
+      Petros.Algebra.VectorSpace
       Petros.Binary
       Petros.Binary.Builder
+      Petros.Eq
+      Petros.Eq.Eq
+      Petros.Eq.PartialEq
       Petros.Experimental.Bob
+      Petros.Internal
       Petros.Numeric
       Petros.Numeric.Complex
+      Petros.Numeric.Types
+      Petros.Numeric.Util
+      Petros.Ord
+      Petros.Ord.Lex
+      Petros.Ord.Ord
+      Petros.Ord.PartialOrd
+      Petros.Ord.Strict
       Petros.Text
       Petros.Text.Builder
       Petros.Text.Char
@@ -45,7 +59,10 @@ library
       Petros.Time.Calendar
       Petros.Time.Calendar.Day
       Petros.Time.Calendar.Month
+      Petros.Time.Calendar.Quarter
+      Petros.Time.Calendar.Week
       Petros.Time.Calendar.Year
+      Petros.Time.Clock
   other-modules:
       Petros.Internal.Basics
   hs-source-dirs:
