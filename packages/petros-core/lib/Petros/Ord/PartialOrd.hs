@@ -2,6 +2,7 @@
 {-# LANGUAGE DefaultSignatures #-}
 {-# LANGUAGE DerivingStrategies #-}
 {-# LANGUAGE DeriveAnyClass #-}
+{-# LANGUAGE UndecidableInstances #-}
 
 module Petros.Ord.PartialOrd (
     PartialOrd (..),
@@ -48,6 +49,8 @@ class (PartialEq a) => PartialOrd a where
 
 (<=>?) :: (PartialOrd a) => a -> a -> Maybe Ordering
 (<=>?) = cmpPartial
+
+infix 4 <., <=., >., >=., >/<, <=>?
 
 -----------------------------------------------------------------
 

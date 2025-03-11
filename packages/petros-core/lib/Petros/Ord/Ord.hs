@@ -49,6 +49,8 @@ class (Eq a, PartialOrd a) => Ord a where
 (<=>) :: (Ord a) => a -> a -> Ordering
 (<=>) = cmp
 
+infix 4 <=, <, >, >=, <=>
+
 class GOrd f where
     gcmp :: (f a) -> (f a) -> Ordering
 
