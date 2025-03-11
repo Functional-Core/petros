@@ -1,6 +1,7 @@
 {-# LANGUAGE DerivingStrategies #-}
 {-# LANGUAGE Trustworthy #-}
 {-# LANGUAGE UndecidableInstances #-}
+{-# LANGUAGE DeriveAnyClass #-}
 
 module Petros.Ord.Lex
     ( Lex (..)
@@ -86,15 +87,15 @@ instance (GLexOrd c) => GLexOrd (M1 i j c) where
 newtype Lex a = Lex {unlex :: a}
     deriving stock (Generic)
     deriving newtype (Show)
-    deriving anyclass (PartialHEq, HEq)
+    deriving anyclass (PartialEq (Lex a), Eq (Lex a))
 
-instance (PartialEq a, Generic a, GLexPartialOrd (Rep a)) => PartialOrd (Lex a) where
+instance (PartialEq_ a, Generic a, GLexPartialOrd (Rep a)) => PartialOrd (Lex a) where
     cmpPartial (Lex x) (Lex y) = gcmpLexPartial (from x) (from y)
 
-instance (Eq a, Generic a, GLexPartialOrd (Rep a), GLexOrd (Rep a)) => Ord (Lex a) where
+instance (Eq_ a, Generic a, GLexPartialOrd (Rep a), GLexOrd (Rep a)) => Ord (Lex a) where
     cmp (Lex x) (Lex y) = gcmpLex (from x) (from y)
 
-type LexPartialOrd a = (PartialEq a, Generic a, GLexPartialOrd (Rep a))
+type LexPartialOrd a = (PartialEq_ a, Generic a, GLexPartialOrd (Rep a))
 
 liftLex :: (Lex a -> Lex a -> b) -> a -> a -> b
 liftLex op x y = (Lex x) `op` (Lex y)
@@ -116,7 +117,7 @@ cmpPartial :: (LexPartialOrd a) => a -> a -> Maybe Ordering
 cmpPartial = liftLex Ord.cmpPartial
 {-# INLINE cmpPartial #-}
 
-type LexOrd a = (Eq a, Generic a, GLexOrd (Rep a), GLexPartialOrd (Rep a))
+type LexOrd a = (Eq_ a, Generic a, GLexOrd (Rep a), GLexPartialOrd (Rep a))
 
 (<), (<=), (>), (>=) :: (LexOrd a) => a -> a -> Bool
 (<) = liftLex (Ord.<)

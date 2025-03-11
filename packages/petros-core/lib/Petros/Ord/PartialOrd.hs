@@ -15,7 +15,7 @@ import GHC.Generics
 import Prelude qualified (Ord (..))
 import Petros.Internal
 
-class (PartialEq a) => PartialOrd a where
+class (PartialEq_ a) => PartialOrd a where
     cmpPartial :: a -> a -> Maybe Ordering
     default cmpPartial :: (Generic a, GPartialOrd (Rep a)) => a -> a -> Maybe Ordering
     cmpPartial x y = gcmpPartial (from x) (from y)
@@ -85,7 +85,7 @@ instance (GPartialOrd c) => GPartialOrd (M1 i j c) where
 
 -----------------------------------------------------------------
 
-instance (Prelude.Ord a, PartialEq a) => PartialOrd (FromPrelude a) where
+instance (Prelude.Ord a, PartialEq_ a) => PartialOrd (FromPrelude a) where
     cmpPartial x y = Just $ liftPrelude2 (Prelude.compare) x y
     {-# INLINE cmpPartial #-}
 

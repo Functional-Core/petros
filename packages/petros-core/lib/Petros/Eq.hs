@@ -1,15 +1,15 @@
 {-# LANGUAGE Safe #-}
 
 module Petros.Eq
-    ( PartialEq
+    ( PartialEq_
     , (~=)
     , (==?)
     , (/~=)
-    , PartialHEq (..)
-    , Eq
+    , PartialEq (..)
+    , Eq_
     , (==)
     , (/=)
-    , HEq (..)
+    , Eq (..)
     ) where
 
 import Petros.Eq.Eq

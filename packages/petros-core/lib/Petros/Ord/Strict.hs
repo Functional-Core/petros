@@ -56,12 +56,12 @@ instance (GStrictPartialOrd c) => GStrictPartialOrd (M1 i j c) where
 newtype Strict a = Strict a
     deriving stock (Generic)
     deriving newtype (Show)
-    deriving anyclass (PartialHEq (Strict a), HEq (Strict a))
+    deriving anyclass (PartialEq (Strict a), Eq (Strict a))
 
-instance (Generic a, PartialEq a, GStrictPartialOrd (Rep a)) => PartialOrd (Strict a) where
+instance (Generic a, PartialEq_ a, GStrictPartialOrd (Rep a)) => PartialOrd (Strict a) where
     cmpPartial (Strict x) (Strict y) = gcmpStrictPartial (from x) (from y)
 
-type StrictPartialOrd a = (Generic a, PartialEq a, GStrictPartialOrd (Rep a))
+type StrictPartialOrd a = (Generic a, PartialEq_ a, GStrictPartialOrd (Rep a))
 
 liftStrict :: (Strict a -> Strict a -> b) -> a -> a -> b
 liftStrict op x y = (Strict x) `op` (Strict y)
