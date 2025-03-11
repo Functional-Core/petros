@@ -7,8 +7,8 @@
 module Petros.Eq.Eq
     ( Eq (..)
     , Eq_
-    , (==)
-    , (/=)
+    , (===)
+    , (/==)
     ) where
 
 import GHC.Generics
@@ -18,25 +18,26 @@ import Prelude qualified
 import Petros.Internal
 
 class (PartialEq a b) => Eq a b where
-    (===) :: a -> b -> Bool
-    default (===) :: (Generic a, Generic b, GEq (Rep a) (Rep b)) => a -> b -> Bool
-    (===) x y = geq (from x) (from y)
-    {-# INLINE (===) #-}
+    (==) :: a -> b -> Bool
+    default (==) :: (Generic a, Generic b, GEq (Rep a) (Rep b)) => a -> b -> Bool
+    (==) x y = geq (from x) (from y)
+    {-# INLINE (==) #-}
 
-    (/==) :: a -> b -> Bool
-    (/==) x y = not (x === y)
-    {-# INLINE (/==) #-}
+    (/=) :: a -> b -> Bool
+    (/=) x y = not (x == y)
+    {-# INLINE (/=) #-}
 
 type Eq_ a = Eq a a
 
-(==) :: Eq_ a => a -> a -> Bool
-(==) = (===)
-{-# INLINE (==) #-}
+(===) :: Eq_ a => a -> a -> Bool
+(===) = (==)
+{-# INLINE (===) #-}
 
-(/=) :: Eq_ a => a -> a -> Bool
-(/=) = (/==)
+(/==) :: Eq_ a => a -> a -> Bool
+(/==) = (/=)
+{-# INLINE (/==) #-}
 
-infix 4 ===, /==, ==, /=
+infix 4 ==, /=, ===, /==
 
 --------------------------------------------------------------------------
 
@@ -70,7 +71,7 @@ instance (GEq f1 g1, GEq f2 g2) => GEq (f1 :*: f2) (g1 :*: g2) where
     geq (x1 :*: x2) (y1 :*: y2) = geq x1 y1 && geq x2 y2
 
 instance (Eq c d) => GEq (K1 i c) (K1 j d) where
-    geq (K1 x) (K1 y) = x === y
+    geq (K1 x) (K1 y) = x == y
 
 instance (GEq f g) => GEq (M1 i t f) (M1 j u g) where
     geq (M1 x) (M1 y) = geq x y
@@ -78,13 +79,13 @@ instance (GEq f g) => GEq (M1 i t f) (M1 j u g) where
 --------------------------------------------------------------------------
 
 instance (Prelude.Eq a) => Eq a (FromPrelude a) where
-    x === y = liftPrelude (x Prelude.==) y
+    x == y = liftPrelude (x Prelude.==) y
 
 instance (Prelude.Eq a) => Eq (FromPrelude a) a where
-    x === y = liftPrelude (Prelude.== y) x
+    x == y = liftPrelude (Prelude.== y) x
     
 instance (Prelude.Eq a) => Eq (FromPrelude a) (FromPrelude a) where
-    (===) = liftPrelude2 (Prelude.==)
+    (==) = liftPrelude2 (Prelude.==)
 
 deriving via (FromPrelude Ordering) instance Eq Ordering Ordering
 

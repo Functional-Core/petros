@@ -7,9 +7,9 @@
 module Petros.Eq.PartialEq
     ( PartialEq (..)
     , PartialEq_
-    , (~=)
-    , (==?)
-    , (/~=)
+    , (~==)
+    , (===?)
+    , (/~==)
     ) where
 
 import GHC.Generics
@@ -18,35 +18,35 @@ import Prelude qualified
 import Petros.Internal
 
 class PartialEq a b where
-    (~==) :: a -> b -> Bool
-    default (~==) :: (Generic a, Generic b, GPartialEq (Rep a) (Rep b)) => a -> b -> Bool
-    (~==) x y = geqPartial (from x) (from y)
-    {-# INLINE (~==) #-}
+    (~=) :: a -> b -> Bool
+    default (~=) :: (Generic a, Generic b, GPartialEq (Rep a) (Rep b)) => a -> b -> Bool
+    (~=) x y = geqPartial (from x) (from y)
+    {-# INLINE (~=) #-}
 
-    (===?) :: a -> b -> Maybe Bool
-    default (===?) :: (Generic a, Generic b, GPartialEq (Rep a) (Rep b)) => a -> b -> Maybe Bool
-    (===?) x y = geqMaybe (from x) (from y)
-    {-# INLINE (===?) #-}
+    (==?) :: a -> b -> Maybe Bool
+    default (==?) :: (Generic a, Generic b, GPartialEq (Rep a) (Rep b)) => a -> b -> Maybe Bool
+    (==?) x y = geqMaybe (from x) (from y)
+    {-# INLINE (==?) #-}
 
-    (/~==) :: a -> b -> Bool
-    (/~==) x y = not (x ~== y)
-    {-# INLINE (/~==) #-}
+    (/~=) :: a -> b -> Bool
+    (/~=) x y = not (x ~= y)
+    {-# INLINE (/~=) #-}
 
 type PartialEq_ a = PartialEq a a
 
-(~=) :: PartialEq_ a => a -> a -> Bool
-(~=) = (~==)
-{-# INLINE (~=) #-}
+(~==) :: PartialEq_ a => a -> a -> Bool
+(~==) = (~=)
+{-# INLINE (~==) #-}
 
-(==?) :: PartialEq_ a => a -> a -> Maybe Bool
-(==?) = (===?)
-{-# INLINE (==?) #-}
+(===?) :: PartialEq_ a => a -> a -> Maybe Bool
+(===?) = (==?)
+{-# INLINE (===?) #-}
 
-(/~=) :: PartialEq_ a => a -> a -> Bool
-(/~=) = (/~==)
-{-# INLINE (/~=) #-}
+(/~==) :: PartialEq_ a => a -> a -> Bool
+(/~==) = (/~=)
+{-# INLINE (/~==) #-}
 
-infix 4 ~==, ===?, /~==, ~=, ==?, /~=
+infix 4 ~=, ==?, /~=, ~==, ===?, /~==
 
 --------------------------------------------------------------------------
 
@@ -94,8 +94,8 @@ instance (GPartialEq f g, GPartialEq f2 g2) => GPartialEq (f :*: f2) (g :*: g2) 
     geqMaybe (x1 :*: x2) (y1 :*: y2) = liftA2 (&&) (geqMaybe x1 y1) (geqMaybe x2 y2)
 
 instance (PartialEq c d) => GPartialEq (K1 i c) (K1 j d) where
-    geqPartial (K1 x) (K1 y) = x ~== y
-    geqMaybe (K1 x) (K1 y) = x ===? y
+    geqPartial (K1 x) (K1 y) = x ~= y
+    geqMaybe (K1 x) (K1 y) = x ==? y
 
 instance (GPartialEq f g) => GPartialEq (M1 i t f) (M1 j u g) where
     geqPartial (M1 x) (M1 y) = geqPartial x y
@@ -104,16 +104,16 @@ instance (GPartialEq f g) => GPartialEq (M1 i t f) (M1 j u g) where
 --------------------------------------------------------------------------
 
 instance (Prelude.Eq a) => PartialEq (FromPrelude a) (FromPrelude a) where
-    (~==) = liftPrelude2 (Prelude.==)
-    x ===? y = Just $ liftPrelude2 (Prelude.==) x y
+    (~=) = liftPrelude2 (Prelude.==)
+    x ==? y = Just $ liftPrelude2 (Prelude.==) x y
 
 instance (Prelude.Eq a) => PartialEq a (FromPrelude a) where
-    x ~== y = liftPrelude (x Prelude.==) y
-    x ===? y = Just $ liftPrelude (x Prelude.==) y
+    x ~= y = liftPrelude (x Prelude.==) y
+    x ==? y = Just $ liftPrelude (x Prelude.==) y
 
 instance (Prelude.Eq a) => PartialEq (FromPrelude a) a where
-    x ~== y = liftPrelude (Prelude.== y) x
-    x ===? y = Just $ liftPrelude (Prelude.== y) x
+    x ~= y = liftPrelude (Prelude.== y) x
+    x ==? y = Just $ liftPrelude (Prelude.== y) x
 
 deriving via (FromPrelude Ordering) instance PartialEq Ordering Ordering
 
