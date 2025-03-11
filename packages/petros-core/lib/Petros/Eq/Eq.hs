@@ -1,8 +1,8 @@
 {-# LANGUAGE DefaultSignatures #-}
-{-# LANGUAGE DerivingStrategies #-}
-{-# LANGUAGE Trustworthy #-}
 {-# LANGUAGE DeriveAnyClass #-}
+{-# LANGUAGE DerivingStrategies #-}
 {-# LANGUAGE DerivingVia #-}
+{-# LANGUAGE Trustworthy #-}
 
 module Petros.Eq.Eq
     ( Eq (..)
@@ -13,9 +13,9 @@ module Petros.Eq.Eq
 
 import GHC.Generics
 import Petros.Eq.PartialEq
+import Petros.Internal
 import Prelude hiding (Eq (..))
 import Prelude qualified
-import Petros.Internal
 
 class (PartialEq a b) => Eq a b where
     (==) :: a -> b -> Bool
@@ -29,11 +29,11 @@ class (PartialEq a b) => Eq a b where
 
 type Eq_ a = Eq a a
 
-(===) :: Eq_ a => a -> a -> Bool
+(===) :: (Eq_ a) => a -> a -> Bool
 (===) = (==)
 {-# INLINE (===) #-}
 
-(/==) :: Eq_ a => a -> a -> Bool
+(/==) :: (Eq_ a) => a -> a -> Bool
 (/==) = (/=)
 {-# INLINE (/==) #-}
 
@@ -55,6 +55,7 @@ instance GEq f V1 where
 
 instance {-# OVERLAPPING #-} GEq U1 U1 where
     geq _ _ = True
+
 instance GEq U1 g where
     geq _ _ = False
 
@@ -83,7 +84,7 @@ instance (Prelude.Eq a) => Eq a (FromPrelude a) where
 
 instance (Prelude.Eq a) => Eq (FromPrelude a) a where
     x == y = liftPrelude (Prelude.== y) x
-    
+
 instance (Prelude.Eq a) => Eq (FromPrelude a) (FromPrelude a) where
     (==) = liftPrelude2 (Prelude.==)
 
