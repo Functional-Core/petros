@@ -62,11 +62,10 @@ instance GEq U1 g where
 instance GEq f U1 where
     geq _ _ = False
 
-instance (GEq f1 f2, GEq f1 g2, GEq g1 f2, GEq g1 g2) => GEq (f1 :+: g1) (f2 :+: g2) where
+instance (GEq f1 f2, GEq g1 g2) => GEq (f1 :+: g1) (f2 :+: g2) where
     geq (L1 x) (L1 y) = geq x y
-    geq (L1 x) (R1 y) = geq x y
-    geq (R1 x) (L1 y) = geq x y
     geq (R1 x) (R1 y) = geq x y
+    geq _ _ = False
 
 instance (GEq f1 g1, GEq f2 g2) => GEq (f1 :*: f2) (g1 :*: g2) where
     geq (x1 :*: x2) (y1 :*: y2) = geq x1 y1 && geq x2 y2
@@ -94,11 +93,14 @@ instance (Prelude.Eq a) => HetEq (FromPrelude a) (FromPrelude a) where
     (==) = liftPrelude2 (Prelude.==)
 
 deriving via (FromPrelude Ordering) instance HetEq Ordering Ordering
+deriving via (FromPrelude Bool) instance HetEq Bool Bool
+deriving via (FromPrelude Int) instance HetEq Int Int
 
 --------------------------------------------------------------------------
 
 deriving anyclass instance (HetEq a b) => HetEq (Maybe a) (Maybe b)
-deriving anyclass instance (HetEq a c, HetEq a d, HetEq b c, HetEq b d) => HetEq (Either a b) (Either c d)
+deriving anyclass instance (HetEq a b) => HetEq [a] [b]
+deriving anyclass instance (HetEq a c, HetEq b d) => HetEq (Either a b) (Either c d)
 
 deriving anyclass instance
     (HetEq a1 a2, HetEq b1 b2)

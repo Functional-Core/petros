@@ -105,16 +105,14 @@ instance GPartialEq f U1 where
     geqPartial _ _ = False
     geqMaybe _ _ = Just False
 
-instance (GPartialEq f1 g1, GPartialEq f1 g2, GPartialEq f2 g1, GPartialEq f2 g2) => GPartialEq (f1 :+: f2) (g1 :+: g2) where
+instance (GPartialEq f1 g1, GPartialEq f2 g2) => GPartialEq (f1 :+: f2) (g1 :+: g2) where
     geqPartial (L1 x) (L1 y) = geqPartial x y
-    geqPartial (L1 x) (R1 y) = geqPartial x y
-    geqPartial (R1 x) (L1 y) = geqPartial x y
     geqPartial (R1 x) (R1 y) = geqPartial x y
+    geqPartial _ _ = False
 
     geqMaybe (L1 x) (L1 y) = geqMaybe x y
-    geqMaybe (L1 x) (R1 y) = geqMaybe x y
-    geqMaybe (R1 x) (L1 y) = geqMaybe x y
     geqMaybe (R1 x) (R1 y) = geqMaybe x y
+    geqMaybe _ _ = Just False
 
 instance (GPartialEq f g, GPartialEq f2 g2) => GPartialEq (f :*: f2) (g :*: g2) where
     geqPartial (x1 :*: x2) (y1 :*: y2) = geqPartial x1 y1 && geqPartial x2 y2
@@ -150,11 +148,13 @@ instance (Prelude.Eq a) => HetPartialEq (FromPrelude a) a where
 
 deriving via (FromPrelude Ordering) instance HetPartialEq Ordering Ordering
 deriving via (FromPrelude Bool) instance HetPartialEq Bool Bool
+deriving via (FromPrelude Int) instance HetPartialEq Int Int
 
 --------------------------------------------------------------------------
 
 deriving anyclass instance (HetPartialEq a b) => HetPartialEq (Maybe a) (Maybe b)
-deriving anyclass instance (HetPartialEq a c, HetPartialEq a d, HetPartialEq b c, HetPartialEq b d) => HetPartialEq (Either a b) (Either c d)
+deriving anyclass instance (HetPartialEq a b) => HetPartialEq [a] [b]
+deriving anyclass instance (HetPartialEq a c, HetPartialEq b d) => HetPartialEq (Either a b) (Either c d)
 
 deriving anyclass instance
     (HetPartialEq a1 a2, HetPartialEq b1 b2)
