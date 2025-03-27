@@ -1,23 +1,30 @@
 {-# LANGUAGE DefaultSignatures #-}
 {-# LANGUAGE DeriveAnyClass #-}
 {-# LANGUAGE DerivingStrategies #-}
-{-# LANGUAGE Trustworthy #-}
 {-# LANGUAGE DerivingVia #-}
+{-# LANGUAGE Trustworthy #-}
+{-# LANGUAGE FlexibleInstances #-}
 
 module Petros.Eq.PartialEq
-    ( PartialEq (..)
-    , PartialEq_
+    ( HetPartialEq (..)
+    , PartialEq
+    , incomparable
     , (~==)
     , (===?)
     , (/~==)
+    , law_partial
+    , law_negation
+    , law_symmetry
+    , law_transitivity
+    , law_extensionality
     ) where
 
 import GHC.Generics
+import Petros.Internal
 import Prelude hiding (Eq (..))
 import Prelude qualified
-import Petros.Internal
 
-class PartialEq a b where
+class HetPartialEq a b where
     (~=) :: a -> b -> Bool
     default (~=) :: (Generic a, Generic b, GPartialEq (Rep a) (Rep b)) => a -> b -> Bool
     (~=) x y = geqPartial (from x) (from y)
@@ -32,17 +39,37 @@ class PartialEq a b where
     (/~=) x y = not (x ~= y)
     {-# INLINE (/~=) #-}
 
-type PartialEq_ a = PartialEq a a
+incomparable :: (HetPartialEq a b) => a -> b -> Bool
+incomparable x y = (x ==? y) ~== Nothing
 
-(~==) :: PartialEq_ a => a -> a -> Bool
+law_partial :: (HetPartialEq a b) => a -> b -> Bool
+law_partial x y = ((x ==? y) Prelude.== Just True) Prelude.== (x ~= y)
+
+law_negation :: (HetPartialEq a b) => a -> b -> Bool
+law_negation x y =
+    ((x /~= y) Prelude.== not (x ~= y))
+        || incomparable x y
+
+law_symmetry :: (HetPartialEq a b, HetPartialEq b a) => a -> b -> Bool
+law_symmetry x y = (x ~= y) Prelude.== (y ~= x)
+
+law_transitivity :: (HetPartialEq a b, HetPartialEq b c, HetPartialEq a c) => a -> b -> c -> Bool
+law_transitivity x y z = not (x ~= y && y ~= z) || (x ~= z)
+
+law_extensionality :: (PartialEq a, PartialEq b) => (a -> b) -> a -> a -> Bool
+law_extensionality f x y = (x ~== y) Prelude.== (f x ~== f y)
+
+type PartialEq a = HetPartialEq a a
+
+(~==) :: (PartialEq a) => a -> a -> Bool
 (~==) = (~=)
 {-# INLINE (~==) #-}
 
-(===?) :: PartialEq_ a => a -> a -> Maybe Bool
+(===?) :: (PartialEq a) => a -> a -> Maybe Bool
 (===?) = (==?)
 {-# INLINE (===?) #-}
 
-(/~==) :: PartialEq_ a => a -> a -> Bool
+(/~==) :: (PartialEq a) => a -> a -> Bool
 (/~==) = (/~=)
 {-# INLINE (/~==) #-}
 
@@ -93,7 +120,7 @@ instance (GPartialEq f g, GPartialEq f2 g2) => GPartialEq (f :*: f2) (g :*: g2) 
     geqPartial (x1 :*: x2) (y1 :*: y2) = geqPartial x1 y1 && geqPartial x2 y2
     geqMaybe (x1 :*: x2) (y1 :*: y2) = liftA2 (&&) (geqMaybe x1 y1) (geqMaybe x2 y2)
 
-instance (PartialEq c d) => GPartialEq (K1 i c) (K1 j d) where
+instance (HetPartialEq c d) => GPartialEq (K1 i c) (K1 j d) where
     geqPartial (K1 x) (K1 y) = x ~= y
     geqMaybe (K1 x) (K1 y) = x ==? y
 
@@ -103,64 +130,71 @@ instance (GPartialEq f g) => GPartialEq (M1 i t f) (M1 j u g) where
 
 --------------------------------------------------------------------------
 
-instance (Prelude.Eq a) => PartialEq (FromPrelude a) (FromPrelude a) where
-    (~=) = liftPrelude2 (Prelude.==)
-    x ==? y = Just $ liftPrelude2 (Prelude.==) x y
-
-instance (Prelude.Eq a) => PartialEq a (FromPrelude a) where
-    x ~= y = liftPrelude (x Prelude.==) y
-    x ==? y = Just $ liftPrelude (x Prelude.==) y
-
-instance (Prelude.Eq a) => PartialEq (FromPrelude a) a where
-    x ~= y = liftPrelude (Prelude.== y) x
-    x ==? y = Just $ liftPrelude (Prelude.== y) x
-
-deriving via (FromPrelude Ordering) instance PartialEq Ordering Ordering
+instance (HetPartialEq b a) => HetPartialEq a (Flipped b) where
+    (~=) = liftFlipped (~=)
+    (==?) = liftFlipped (==?)
 
 --------------------------------------------------------------------------
 
-deriving anyclass instance (PartialEq a b) => PartialEq (Maybe a) (Maybe b)
-deriving anyclass instance (PartialEq a c, PartialEq a d, PartialEq b c, PartialEq b d) => PartialEq (Either a b) (Either c d)
+instance (Prelude.Eq a) => HetPartialEq (FromPrelude a) (FromPrelude a) where
+    (~=) = liftPrelude2 (Prelude.==)
+    x ==? y = Just $ liftPrelude2 (Prelude.==) x y
+
+instance (Prelude.Eq a) => HetPartialEq a (FromPrelude a) where
+    x ~= y = liftPrelude (x Prelude.==) y
+    x ==? y = Just $ liftPrelude (x Prelude.==) y
+
+instance (Prelude.Eq a) => HetPartialEq (FromPrelude a) a where
+    x ~= y = liftPrelude (Prelude.== y) x
+    x ==? y = Just $ liftPrelude (Prelude.== y) x
+
+deriving via (FromPrelude Ordering) instance HetPartialEq Ordering Ordering
+deriving via (FromPrelude Bool) instance HetPartialEq Bool Bool
+
+--------------------------------------------------------------------------
+
+deriving anyclass instance (HetPartialEq a b) => HetPartialEq (Maybe a) (Maybe b)
+deriving anyclass instance (HetPartialEq a c, HetPartialEq a d, HetPartialEq b c, HetPartialEq b d) => HetPartialEq (Either a b) (Either c d)
 
 deriving anyclass instance
-    (PartialEq a1 a2, PartialEq b1 b2)
-    => PartialEq (a1, b1) (a2, b2)
+    (HetPartialEq a1 a2, HetPartialEq b1 b2)
+    => HetPartialEq (a1, b1) (a2, b2)
 deriving anyclass instance
-    (PartialEq a1 a2, PartialEq b1 b2, PartialEq c1 c2)
-    => PartialEq (a1, b1, c1) (a2, b2, c2)
+    (HetPartialEq a1 a2, HetPartialEq b1 b2, HetPartialEq c1 c2)
+    => HetPartialEq (a1, b1, c1) (a2, b2, c2)
 deriving anyclass instance
-    (PartialEq a1 a2, PartialEq b1 b2, PartialEq c1 c2, PartialEq d1 d2)
-    => PartialEq (a1, b1, c1, d1) (a2, b2, c2, d2)
+    (HetPartialEq a1 a2, HetPartialEq b1 b2, HetPartialEq c1 c2, HetPartialEq d1 d2)
+    => HetPartialEq (a1, b1, c1, d1) (a2, b2, c2, d2)
 deriving anyclass instance
-    (PartialEq a1 a2, PartialEq b1 b2, PartialEq c1 c2, PartialEq d1 d2, PartialEq e1 e2)
-    => PartialEq (a1, b1, c1, d1, e1) (a2, b2, c2, d2, e2)
+    (HetPartialEq a1 a2, HetPartialEq b1 b2, HetPartialEq c1 c2, HetPartialEq d1 d2, HetPartialEq e1 e2)
+    => HetPartialEq (a1, b1, c1, d1, e1) (a2, b2, c2, d2, e2)
 deriving anyclass instance
-    (PartialEq a1 a2, PartialEq b1 b2, PartialEq c1 c2, PartialEq d1 d2, PartialEq e1 e2, PartialEq f1 f2)
-    => PartialEq (a1, b1, c1, d1, e1, f1) (a2, b2, c2, d2, e2, f2)
+    (HetPartialEq a1 a2, HetPartialEq b1 b2, HetPartialEq c1 c2, HetPartialEq d1 d2, HetPartialEq e1 e2, HetPartialEq f1 f2)
+    => HetPartialEq (a1, b1, c1, d1, e1, f1) (a2, b2, c2, d2, e2, f2)
 deriving anyclass instance
-    (PartialEq a1 a2, PartialEq b1 b2, PartialEq c1 c2, PartialEq d1 d2, PartialEq e1 e2, PartialEq f1 f2, PartialEq g1 g2)
-    => PartialEq (a1, b1, c1, d1, e1, f1, g1) (a2, b2, c2, d2, e2, f2, g2)
+    (HetPartialEq a1 a2, HetPartialEq b1 b2, HetPartialEq c1 c2, HetPartialEq d1 d2, HetPartialEq e1 e2, HetPartialEq f1 f2, HetPartialEq g1 g2)
+    => HetPartialEq (a1, b1, c1, d1, e1, f1, g1) (a2, b2, c2, d2, e2, f2, g2)
 deriving anyclass instance
-    (PartialEq a1 a2, PartialEq b1 b2, PartialEq c1 c2, PartialEq d1 d2, PartialEq e1 e2, PartialEq f1 f2, PartialEq g1 g2, PartialEq h1 h2)
-    => PartialEq (a1, b1, c1, d1, e1, f1, g1, h1) (a2, b2, c2, d2, e2, f2, g2, h2)
+    (HetPartialEq a1 a2, HetPartialEq b1 b2, HetPartialEq c1 c2, HetPartialEq d1 d2, HetPartialEq e1 e2, HetPartialEq f1 f2, HetPartialEq g1 g2, HetPartialEq h1 h2)
+    => HetPartialEq (a1, b1, c1, d1, e1, f1, g1, h1) (a2, b2, c2, d2, e2, f2, g2, h2)
 deriving anyclass instance
-    (PartialEq a1 a2, PartialEq b1 b2, PartialEq c1 c2, PartialEq d1 d2, PartialEq e1 e2, PartialEq f1 f2, PartialEq g1 g2, PartialEq h1 h2, PartialEq i1 i2)
-    => PartialEq (a1, b1, c1, d1, e1, f1, g1, h1, i1) (a2, b2, c2, d2, e2, f2, g2, h2, i2)
+    (HetPartialEq a1 a2, HetPartialEq b1 b2, HetPartialEq c1 c2, HetPartialEq d1 d2, HetPartialEq e1 e2, HetPartialEq f1 f2, HetPartialEq g1 g2, HetPartialEq h1 h2, HetPartialEq i1 i2)
+    => HetPartialEq (a1, b1, c1, d1, e1, f1, g1, h1, i1) (a2, b2, c2, d2, e2, f2, g2, h2, i2)
 deriving anyclass instance
-    (PartialEq a1 a2, PartialEq b1 b2, PartialEq c1 c2, PartialEq d1 d2, PartialEq e1 e2, PartialEq f1 f2, PartialEq g1 g2, PartialEq h1 h2, PartialEq i1 i2, PartialEq j1 j2)
-    => PartialEq (a1, b1, c1, d1, e1, f1, g1, h1, i1, j1) (a2, b2, c2, d2, e2, f2, g2, h2, i2, j2)
+    (HetPartialEq a1 a2, HetPartialEq b1 b2, HetPartialEq c1 c2, HetPartialEq d1 d2, HetPartialEq e1 e2, HetPartialEq f1 f2, HetPartialEq g1 g2, HetPartialEq h1 h2, HetPartialEq i1 i2, HetPartialEq j1 j2)
+    => HetPartialEq (a1, b1, c1, d1, e1, f1, g1, h1, i1, j1) (a2, b2, c2, d2, e2, f2, g2, h2, i2, j2)
 deriving anyclass instance
-    (PartialEq a1 a2, PartialEq b1 b2, PartialEq c1 c2, PartialEq d1 d2, PartialEq e1 e2, PartialEq f1 f2, PartialEq g1 g2, PartialEq h1 h2, PartialEq i1 i2, PartialEq j1 j2, PartialEq k1 k2)
-    => PartialEq (a1, b1, c1, d1, e1, f1, g1, h1, i1, j1, k1) (a2, b2, c2, d2, e2, f2, g2, h2, i2, j2, k2)
+    (HetPartialEq a1 a2, HetPartialEq b1 b2, HetPartialEq c1 c2, HetPartialEq d1 d2, HetPartialEq e1 e2, HetPartialEq f1 f2, HetPartialEq g1 g2, HetPartialEq h1 h2, HetPartialEq i1 i2, HetPartialEq j1 j2, HetPartialEq k1 k2)
+    => HetPartialEq (a1, b1, c1, d1, e1, f1, g1, h1, i1, j1, k1) (a2, b2, c2, d2, e2, f2, g2, h2, i2, j2, k2)
 deriving anyclass instance
-    (PartialEq a1 a2, PartialEq b1 b2, PartialEq c1 c2, PartialEq d1 d2, PartialEq e1 e2, PartialEq f1 f2, PartialEq g1 g2, PartialEq h1 h2, PartialEq i1 i2, PartialEq j1 j2, PartialEq k1 k2, PartialEq l1 l2)
-    => PartialEq (a1, b1, c1, d1, e1, f1, g1, h1, i1, j1, k1, l1) (a2, b2, c2, d2, e2, f2, g2, h2, i2, j2, k2, l2)
+    (HetPartialEq a1 a2, HetPartialEq b1 b2, HetPartialEq c1 c2, HetPartialEq d1 d2, HetPartialEq e1 e2, HetPartialEq f1 f2, HetPartialEq g1 g2, HetPartialEq h1 h2, HetPartialEq i1 i2, HetPartialEq j1 j2, HetPartialEq k1 k2, HetPartialEq l1 l2)
+    => HetPartialEq (a1, b1, c1, d1, e1, f1, g1, h1, i1, j1, k1, l1) (a2, b2, c2, d2, e2, f2, g2, h2, i2, j2, k2, l2)
 deriving anyclass instance
-    (PartialEq a1 a2, PartialEq b1 b2, PartialEq c1 c2, PartialEq d1 d2, PartialEq e1 e2, PartialEq f1 f2, PartialEq g1 g2, PartialEq h1 h2, PartialEq i1 i2, PartialEq j1 j2, PartialEq k1 k2, PartialEq l1 l2, PartialEq m1 m2)
-    => PartialEq (a1, b1, c1, d1, e1, f1, g1, h1, i1, j1, k1, l1, m1) (a2, b2, c2, d2, e2, f2, g2, h2, i2, j2, k2, l2, m2)
+    (HetPartialEq a1 a2, HetPartialEq b1 b2, HetPartialEq c1 c2, HetPartialEq d1 d2, HetPartialEq e1 e2, HetPartialEq f1 f2, HetPartialEq g1 g2, HetPartialEq h1 h2, HetPartialEq i1 i2, HetPartialEq j1 j2, HetPartialEq k1 k2, HetPartialEq l1 l2, HetPartialEq m1 m2)
+    => HetPartialEq (a1, b1, c1, d1, e1, f1, g1, h1, i1, j1, k1, l1, m1) (a2, b2, c2, d2, e2, f2, g2, h2, i2, j2, k2, l2, m2)
 deriving anyclass instance
-    (PartialEq a1 a2, PartialEq b1 b2, PartialEq c1 c2, PartialEq d1 d2, PartialEq e1 e2, PartialEq f1 f2, PartialEq g1 g2, PartialEq h1 h2, PartialEq i1 i2, PartialEq j1 j2, PartialEq k1 k2, PartialEq l1 l2, PartialEq m1 m2, PartialEq n1 n2)
-    => PartialEq (a1, b1, c1, d1, e1, f1, g1, h1, i1, j1, k1, l1, m1, n1) (a2, b2, c2, d2, e2, f2, g2, h2, i2, j2, k2, l2, m2, n2)
+    (HetPartialEq a1 a2, HetPartialEq b1 b2, HetPartialEq c1 c2, HetPartialEq d1 d2, HetPartialEq e1 e2, HetPartialEq f1 f2, HetPartialEq g1 g2, HetPartialEq h1 h2, HetPartialEq i1 i2, HetPartialEq j1 j2, HetPartialEq k1 k2, HetPartialEq l1 l2, HetPartialEq m1 m2, HetPartialEq n1 n2)
+    => HetPartialEq (a1, b1, c1, d1, e1, f1, g1, h1, i1, j1, k1, l1, m1, n1) (a2, b2, c2, d2, e2, f2, g2, h2, i2, j2, k2, l2, m2, n2)
 deriving anyclass instance
-    (PartialEq a1 a2, PartialEq b1 b2, PartialEq c1 c2, PartialEq d1 d2, PartialEq e1 e2, PartialEq f1 f2, PartialEq g1 g2, PartialEq h1 h2, PartialEq i1 i2, PartialEq j1 j2, PartialEq k1 k2, PartialEq l1 l2, PartialEq m1 m2, PartialEq n1 n2, PartialEq o1 o2)
-    => PartialEq (a1, b1, c1, d1, e1, f1, g1, h1, i1, j1, k1, l1, m1, n1, o1) (a2, b2, c2, d2, e2, f2, g2, h2, i2, j2, k2, l2, m2, n2, o2)
+    (HetPartialEq a1 a2, HetPartialEq b1 b2, HetPartialEq c1 c2, HetPartialEq d1 d2, HetPartialEq e1 e2, HetPartialEq f1 f2, HetPartialEq g1 g2, HetPartialEq h1 h2, HetPartialEq i1 i2, HetPartialEq j1 j2, HetPartialEq k1 k2, HetPartialEq l1 l2, HetPartialEq m1 m2, HetPartialEq n1 n2, HetPartialEq o1 o2)
+    => HetPartialEq (a1, b1, c1, d1, e1, f1, g1, h1, i1, j1, k1, l1, m1, n1, o1) (a2, b2, c2, d2, e2, f2, g2, h2, i2, j2, k2, l2, m2, n2, o2)

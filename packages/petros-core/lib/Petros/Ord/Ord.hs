@@ -15,7 +15,7 @@ import Petros.Ord.PartialOrd ()
 import Prelude qualified
 import Petros.Internal
 
-class (Eq_ a, PartialOrd a) => Ord a where
+class (Eq a, PartialOrd a) => Ord a where
     cmp :: a -> a -> Ordering
     cmp x y =
         if x == y
@@ -70,5 +70,5 @@ instance (Ord c) => GOrd (K1 i c) where
 instance (GOrd c) => GOrd (M1 i j c) where
     gcmp (M1 x) (M1 y) = gcmp x y
 
-instance (Prelude.Ord a, Eq_ a, PartialOrd a) => Ord (FromPrelude a) where
+instance (Prelude.Ord a, Eq a, PartialOrd a) => Ord (FromPrelude a) where
     cmp = liftPrelude2 Prelude.compare

@@ -5,8 +5,8 @@
 {-# LANGUAGE Trustworthy #-}
 
 module Petros.Eq.Eq
-    ( Eq (..)
-    , Eq_
+    ( HetEq (..)
+    , Eq
     , (===)
     , (/==)
     ) where
@@ -17,7 +17,7 @@ import Petros.Internal
 import Prelude hiding (Eq (..))
 import Prelude qualified
 
-class (PartialEq a b) => Eq a b where
+class (HetPartialEq a b) => HetEq a b where
     (==) :: a -> b -> Bool
     default (==) :: (Generic a, Generic b, GEq (Rep a) (Rep b)) => a -> b -> Bool
     (==) x y = geq (from x) (from y)
@@ -27,13 +27,13 @@ class (PartialEq a b) => Eq a b where
     (/=) x y = not (x == y)
     {-# INLINE (/=) #-}
 
-type Eq_ a = Eq a a
+type Eq a = HetEq a a
 
-(===) :: (Eq_ a) => a -> a -> Bool
+(===) :: (Eq a) => a -> a -> Bool
 (===) = (==)
 {-# INLINE (===) #-}
 
-(/==) :: (Eq_ a) => a -> a -> Bool
+(/==) :: (Eq a) => a -> a -> Bool
 (/==) = (/=)
 {-# INLINE (/==) #-}
 
@@ -71,7 +71,7 @@ instance (GEq f1 f2, GEq f1 g2, GEq g1 f2, GEq g1 g2) => GEq (f1 :+: g1) (f2 :+:
 instance (GEq f1 g1, GEq f2 g2) => GEq (f1 :*: f2) (g1 :*: g2) where
     geq (x1 :*: x2) (y1 :*: y2) = geq x1 y1 && geq x2 y2
 
-instance (Eq c d) => GEq (K1 i c) (K1 j d) where
+instance (HetEq c d) => GEq (K1 i c) (K1 j d) where
     geq (K1 x) (K1 y) = x == y
 
 instance (GEq f g) => GEq (M1 i t f) (M1 j u g) where
@@ -79,61 +79,66 @@ instance (GEq f g) => GEq (M1 i t f) (M1 j u g) where
 
 --------------------------------------------------------------------------
 
-instance (Prelude.Eq a) => Eq a (FromPrelude a) where
-    x == y = liftPrelude (x Prelude.==) y
-
-instance (Prelude.Eq a) => Eq (FromPrelude a) a where
-    x == y = liftPrelude (Prelude.== y) x
-
-instance (Prelude.Eq a) => Eq (FromPrelude a) (FromPrelude a) where
-    (==) = liftPrelude2 (Prelude.==)
-
-deriving via (FromPrelude Ordering) instance Eq Ordering Ordering
+instance (HetEq b a) => HetEq a (Flipped b) where
+    (==) = liftFlipped (==)
 
 --------------------------------------------------------------------------
 
-deriving anyclass instance (Eq a b) => Eq (Maybe a) (Maybe b)
-deriving anyclass instance (Eq a c, Eq a d, Eq b c, Eq b d) => Eq (Either a b) (Either c d)
+instance (Prelude.Eq a) => HetEq a (FromPrelude a) where
+    x == y = liftPrelude (x Prelude.==) y
+
+instance (Prelude.Eq a) => HetEq (FromPrelude a) a where
+    x == y = liftPrelude (Prelude.== y) x
+
+instance (Prelude.Eq a) => HetEq (FromPrelude a) (FromPrelude a) where
+    (==) = liftPrelude2 (Prelude.==)
+
+deriving via (FromPrelude Ordering) instance HetEq Ordering Ordering
+
+--------------------------------------------------------------------------
+
+deriving anyclass instance (HetEq a b) => HetEq (Maybe a) (Maybe b)
+deriving anyclass instance (HetEq a c, HetEq a d, HetEq b c, HetEq b d) => HetEq (Either a b) (Either c d)
 
 deriving anyclass instance
-    (Eq a1 a2, Eq b1 b2)
-    => Eq (a1, b1) (a2, b2)
+    (HetEq a1 a2, HetEq b1 b2)
+    => HetEq (a1, b1) (a2, b2)
 deriving anyclass instance
-    (Eq a1 a2, Eq b1 b2, Eq c1 c2)
-    => Eq (a1, b1, c1) (a2, b2, c2)
+    (HetEq a1 a2, HetEq b1 b2, HetEq c1 c2)
+    => HetEq (a1, b1, c1) (a2, b2, c2)
 deriving anyclass instance
-    (Eq a1 a2, Eq b1 b2, Eq c1 c2, Eq d1 d2)
-    => Eq (a1, b1, c1, d1) (a2, b2, c2, d2)
+    (HetEq a1 a2, HetEq b1 b2, HetEq c1 c2, HetEq d1 d2)
+    => HetEq (a1, b1, c1, d1) (a2, b2, c2, d2)
 deriving anyclass instance
-    (Eq a1 a2, Eq b1 b2, Eq c1 c2, Eq d1 d2, Eq e1 e2)
-    => Eq (a1, b1, c1, d1, e1) (a2, b2, c2, d2, e2)
+    (HetEq a1 a2, HetEq b1 b2, HetEq c1 c2, HetEq d1 d2, HetEq e1 e2)
+    => HetEq (a1, b1, c1, d1, e1) (a2, b2, c2, d2, e2)
 deriving anyclass instance
-    (Eq a1 a2, Eq b1 b2, Eq c1 c2, Eq d1 d2, Eq e1 e2, Eq f1 f2)
-    => Eq (a1, b1, c1, d1, e1, f1) (a2, b2, c2, d2, e2, f2)
+    (HetEq a1 a2, HetEq b1 b2, HetEq c1 c2, HetEq d1 d2, HetEq e1 e2, HetEq f1 f2)
+    => HetEq (a1, b1, c1, d1, e1, f1) (a2, b2, c2, d2, e2, f2)
 deriving anyclass instance
-    (Eq a1 a2, Eq b1 b2, Eq c1 c2, Eq d1 d2, Eq e1 e2, Eq f1 f2, Eq g1 g2)
-    => Eq (a1, b1, c1, d1, e1, f1, g1) (a2, b2, c2, d2, e2, f2, g2)
+    (HetEq a1 a2, HetEq b1 b2, HetEq c1 c2, HetEq d1 d2, HetEq e1 e2, HetEq f1 f2, HetEq g1 g2)
+    => HetEq (a1, b1, c1, d1, e1, f1, g1) (a2, b2, c2, d2, e2, f2, g2)
 deriving anyclass instance
-    (Eq a1 a2, Eq b1 b2, Eq c1 c2, Eq d1 d2, Eq e1 e2, Eq f1 f2, Eq g1 g2, Eq h1 h2)
-    => Eq (a1, b1, c1, d1, e1, f1, g1, h1) (a2, b2, c2, d2, e2, f2, g2, h2)
+    (HetEq a1 a2, HetEq b1 b2, HetEq c1 c2, HetEq d1 d2, HetEq e1 e2, HetEq f1 f2, HetEq g1 g2, HetEq h1 h2)
+    => HetEq (a1, b1, c1, d1, e1, f1, g1, h1) (a2, b2, c2, d2, e2, f2, g2, h2)
 deriving anyclass instance
-    (Eq a1 a2, Eq b1 b2, Eq c1 c2, Eq d1 d2, Eq e1 e2, Eq f1 f2, Eq g1 g2, Eq h1 h2, Eq i1 i2)
-    => Eq (a1, b1, c1, d1, e1, f1, g1, h1, i1) (a2, b2, c2, d2, e2, f2, g2, h2, i2)
+    (HetEq a1 a2, HetEq b1 b2, HetEq c1 c2, HetEq d1 d2, HetEq e1 e2, HetEq f1 f2, HetEq g1 g2, HetEq h1 h2, HetEq i1 i2)
+    => HetEq (a1, b1, c1, d1, e1, f1, g1, h1, i1) (a2, b2, c2, d2, e2, f2, g2, h2, i2)
 deriving anyclass instance
-    (Eq a1 a2, Eq b1 b2, Eq c1 c2, Eq d1 d2, Eq e1 e2, Eq f1 f2, Eq g1 g2, Eq h1 h2, Eq i1 i2, Eq j1 j2)
-    => Eq (a1, b1, c1, d1, e1, f1, g1, h1, i1, j1) (a2, b2, c2, d2, e2, f2, g2, h2, i2, j2)
+    (HetEq a1 a2, HetEq b1 b2, HetEq c1 c2, HetEq d1 d2, HetEq e1 e2, HetEq f1 f2, HetEq g1 g2, HetEq h1 h2, HetEq i1 i2, HetEq j1 j2)
+    => HetEq (a1, b1, c1, d1, e1, f1, g1, h1, i1, j1) (a2, b2, c2, d2, e2, f2, g2, h2, i2, j2)
 deriving anyclass instance
-    (Eq a1 a2, Eq b1 b2, Eq c1 c2, Eq d1 d2, Eq e1 e2, Eq f1 f2, Eq g1 g2, Eq h1 h2, Eq i1 i2, Eq j1 j2, Eq k1 k2)
-    => Eq (a1, b1, c1, d1, e1, f1, g1, h1, i1, j1, k1) (a2, b2, c2, d2, e2, f2, g2, h2, i2, j2, k2)
+    (HetEq a1 a2, HetEq b1 b2, HetEq c1 c2, HetEq d1 d2, HetEq e1 e2, HetEq f1 f2, HetEq g1 g2, HetEq h1 h2, HetEq i1 i2, HetEq j1 j2, HetEq k1 k2)
+    => HetEq (a1, b1, c1, d1, e1, f1, g1, h1, i1, j1, k1) (a2, b2, c2, d2, e2, f2, g2, h2, i2, j2, k2)
 deriving anyclass instance
-    (Eq a1 a2, Eq b1 b2, Eq c1 c2, Eq d1 d2, Eq e1 e2, Eq f1 f2, Eq g1 g2, Eq h1 h2, Eq i1 i2, Eq j1 j2, Eq k1 k2, Eq l1 l2)
-    => Eq (a1, b1, c1, d1, e1, f1, g1, h1, i1, j1, k1, l1) (a2, b2, c2, d2, e2, f2, g2, h2, i2, j2, k2, l2)
+    (HetEq a1 a2, HetEq b1 b2, HetEq c1 c2, HetEq d1 d2, HetEq e1 e2, HetEq f1 f2, HetEq g1 g2, HetEq h1 h2, HetEq i1 i2, HetEq j1 j2, HetEq k1 k2, HetEq l1 l2)
+    => HetEq (a1, b1, c1, d1, e1, f1, g1, h1, i1, j1, k1, l1) (a2, b2, c2, d2, e2, f2, g2, h2, i2, j2, k2, l2)
 deriving anyclass instance
-    (Eq a1 a2, Eq b1 b2, Eq c1 c2, Eq d1 d2, Eq e1 e2, Eq f1 f2, Eq g1 g2, Eq h1 h2, Eq i1 i2, Eq j1 j2, Eq k1 k2, Eq l1 l2, Eq m1 m2)
-    => Eq (a1, b1, c1, d1, e1, f1, g1, h1, i1, j1, k1, l1, m1) (a2, b2, c2, d2, e2, f2, g2, h2, i2, j2, k2, l2, m2)
+    (HetEq a1 a2, HetEq b1 b2, HetEq c1 c2, HetEq d1 d2, HetEq e1 e2, HetEq f1 f2, HetEq g1 g2, HetEq h1 h2, HetEq i1 i2, HetEq j1 j2, HetEq k1 k2, HetEq l1 l2, HetEq m1 m2)
+    => HetEq (a1, b1, c1, d1, e1, f1, g1, h1, i1, j1, k1, l1, m1) (a2, b2, c2, d2, e2, f2, g2, h2, i2, j2, k2, l2, m2)
 deriving anyclass instance
-    (Eq a1 a2, Eq b1 b2, Eq c1 c2, Eq d1 d2, Eq e1 e2, Eq f1 f2, Eq g1 g2, Eq h1 h2, Eq i1 i2, Eq j1 j2, Eq k1 k2, Eq l1 l2, Eq m1 m2, Eq n1 n2)
-    => Eq (a1, b1, c1, d1, e1, f1, g1, h1, i1, j1, k1, l1, m1, n1) (a2, b2, c2, d2, e2, f2, g2, h2, i2, j2, k2, l2, m2, n2)
+    (HetEq a1 a2, HetEq b1 b2, HetEq c1 c2, HetEq d1 d2, HetEq e1 e2, HetEq f1 f2, HetEq g1 g2, HetEq h1 h2, HetEq i1 i2, HetEq j1 j2, HetEq k1 k2, HetEq l1 l2, HetEq m1 m2, HetEq n1 n2)
+    => HetEq (a1, b1, c1, d1, e1, f1, g1, h1, i1, j1, k1, l1, m1, n1) (a2, b2, c2, d2, e2, f2, g2, h2, i2, j2, k2, l2, m2, n2)
 deriving anyclass instance
-    (Eq a1 a2, Eq b1 b2, Eq c1 c2, Eq d1 d2, Eq e1 e2, Eq f1 f2, Eq g1 g2, Eq h1 h2, Eq i1 i2, Eq j1 j2, Eq k1 k2, Eq l1 l2, Eq m1 m2, Eq n1 n2, Eq o1 o2)
-    => Eq (a1, b1, c1, d1, e1, f1, g1, h1, i1, j1, k1, l1, m1, n1, o1) (a2, b2, c2, d2, e2, f2, g2, h2, i2, j2, k2, l2, m2, n2, o2)
+    (HetEq a1 a2, HetEq b1 b2, HetEq c1 c2, HetEq d1 d2, HetEq e1 e2, HetEq f1 f2, HetEq g1 g2, HetEq h1 h2, HetEq i1 i2, HetEq j1 j2, HetEq k1 k2, HetEq l1 l2, HetEq m1 m2, HetEq n1 n2, HetEq o1 o2)
+    => HetEq (a1, b1, c1, d1, e1, f1, g1, h1, i1, j1, k1, l1, m1, n1, o1) (a2, b2, c2, d2, e2, f2, g2, h2, i2, j2, k2, l2, m2, n2, o2)
