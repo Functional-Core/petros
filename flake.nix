@@ -96,6 +96,12 @@
           ];
         };
 
+        benchmark = {
+          enable = true;
+          dependencies = [
+            "criterion"
+          ];
+        };
       };
     };
 }

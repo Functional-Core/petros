@@ -83,3 +83,20 @@ library
     , unliftio
     , unordered-containers
   default-language: GHC2021
+
+benchmark petros-core-bench
+  type: exitcode-stdio-1.0
+  main-is: Main.hs
+  other-modules:
+      Bench.Petros.Eq
+      Paths_petros_core
+  hs-source-dirs:
+      benchmark
+  default-extensions:
+      NoImplicitPrelude
+  ghc-options: -fhide-source-paths -Wall -Wcompat -Widentities -Wimplicit-prelude -Wredundant-constraints -Wmissing-export-lists -Wmissing-deriving-strategies -Wunused-packages -Winvalid-haddock -Wredundant-bang-patterns -Woperator-whitespace -Wredundant-strictness-flags -Wmissing-safe-haskell-mode -O1
+  build-depends:
+      base ==4.*
+    , criterion
+    , petros-core
+  default-language: GHC2021
