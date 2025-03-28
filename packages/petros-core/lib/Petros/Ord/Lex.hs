@@ -87,7 +87,7 @@ instance (GLexOrd c) => GLexOrd (M1 i j c) where
 newtype Lex a = Lex {unlex :: a}
     deriving stock (Generic)
     deriving newtype (Show)
-    deriving anyclass (HetPartialEq (Lex a), HetEq (Lex a))
+    deriving anyclass (PartialEq, Eq)
 
 instance (PartialEq a, Generic a, GLexPartialOrd (Rep a)) => PartialOrd (Lex a) where
     cmpPartial (Lex x) (Lex y) = gcmpLexPartial (from x) (from y)
