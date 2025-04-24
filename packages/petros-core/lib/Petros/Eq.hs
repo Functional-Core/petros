@@ -4,10 +4,12 @@ module Petros.Eq
     ( PartialEq (..)
     , incomparable
     , partialEqOn
-    , partialEqVia
+    , partialEqWith
+    , partialEqBy
     , Eq (..)
     , eqOn
-    , eqVia
+    , eqWith
+    , eqBy
     ) where
 
 import Petros.Eq.Eq

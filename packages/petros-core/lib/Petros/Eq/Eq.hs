@@ -7,7 +7,8 @@
 
 module Petros.Eq.Eq
     ( Eq (..)
-    , eqVia
+    , eqBy
+    , eqWith
     , eqOn
     ) where
 
@@ -30,11 +31,14 @@ class (PartialEq a) => Eq a where
 
 infix 4 ==, /=
 
-eqVia :: Eq b => (a -> b) -> a -> a -> Bool
-eqVia f x y = f x == f y
+eqBy :: (a -> a -> Bool) -> a -> a -> Bool
+eqBy f x y = f x y
+
+eqWith :: Eq b => (a -> b) -> a -> a -> Bool
+eqWith f x y = f x == f y
 
 eqOn :: forall f r a. (HasField f r a, Eq a) => r -> r -> Bool
-eqOn = eqVia (getField @f)
+eqOn = eqWith (getField @f)
 
 --------------------------------------------------------------------------
 

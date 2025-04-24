@@ -8,7 +8,8 @@
 module Petros.Eq.PartialEq
     ( PartialEq (..)
     , incomparable
-    , partialEqVia
+    , partialEqBy
+    , partialEqWith
     , partialEqOn
     ) where
 
@@ -38,11 +39,14 @@ infix 4 ~=, ==?, /~=
 incomparable :: (PartialEq a) => a -> a -> Bool
 incomparable x y = (x ==? y) ~= Nothing
 
-partialEqVia :: (PartialEq b) => (a -> b) -> a -> a -> Bool
-partialEqVia f x y = f x ~= f y
+partialEqBy :: (a -> a -> Maybe Bool) -> a -> a -> Maybe Bool
+partialEqBy f x y = f x y
+
+partialEqWith :: (PartialEq b) => (a -> b) -> a -> a -> Bool
+partialEqWith f x y = f x ~= f y
 
 partialEqOn :: forall f r a. (HasField f r a, PartialEq a) => r -> r -> Bool
-partialEqOn = partialEqVia (getField @f)
+partialEqOn = partialEqWith (getField @f)
 
 --------------------------------------------------------------------------
 
