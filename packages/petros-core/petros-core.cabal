@@ -70,7 +70,7 @@ library
       lib
   default-extensions:
       NoImplicitPrelude
-  ghc-options: -fhide-source-paths -Wall -Wcompat -Widentities -Wimplicit-prelude -Wredundant-constraints -Wmissing-export-lists -Wmissing-deriving-strategies -Wunused-packages -Winvalid-haddock -Wredundant-bang-patterns -Woperator-whitespace -Wredundant-strictness-flags -Wmissing-safe-haskell-mode -O1
+  ghc-options: -fhide-source-paths -Wall -Wcompat -Widentities -Wimplicit-prelude -Wredundant-constraints -Wmissing-export-lists -Wmissing-deriving-strategies -Wunused-packages -Winvalid-haddock -Wredundant-bang-patterns -Woperator-whitespace -Wredundant-strictness-flags -O1 -Wmissing-safe-haskell-mode
   build-depends:
       base
     , bytestring
@@ -84,6 +84,31 @@ library
     , unordered-containers
   default-language: GHC2021
 
+test-suite petros-core-test
+  type: exitcode-stdio-1.0
+  main-is: Main.hs
+  other-modules:
+      Petros.Eq.EqSpec
+      Petros.Eq.PartialEqSpec
+      Spec
+      Paths_petros_core
+  hs-source-dirs:
+      test
+  default-extensions:
+      NoImplicitPrelude
+  ghc-options: -fhide-source-paths -Wall -Wcompat -Widentities -Wimplicit-prelude -Wredundant-constraints -Wmissing-export-lists -Wmissing-deriving-strategies -Wunused-packages -Winvalid-haddock -Wredundant-bang-patterns -Woperator-whitespace -Wredundant-strictness-flags -O1 -threaded -rtsopts -with-rtsopts=-N
+  build-depends:
+      QuickCheck
+    , base ==4.*
+    , genvalidity
+    , genvalidity-property
+    , hspec
+    , hspec-api
+    , hspec-discover
+    , petros-core
+    , validity
+  default-language: GHC2021
+
 benchmark petros-core-bench
   type: exitcode-stdio-1.0
   main-is: Main.hs
@@ -94,7 +119,7 @@ benchmark petros-core-bench
       benchmark
   default-extensions:
       NoImplicitPrelude
-  ghc-options: -fhide-source-paths -Wall -Wcompat -Widentities -Wimplicit-prelude -Wredundant-constraints -Wmissing-export-lists -Wmissing-deriving-strategies -Wunused-packages -Winvalid-haddock -Wredundant-bang-patterns -Woperator-whitespace -Wredundant-strictness-flags -Wmissing-safe-haskell-mode -O1
+  ghc-options: -fhide-source-paths -Wall -Wcompat -Widentities -Wimplicit-prelude -Wredundant-constraints -Wmissing-export-lists -Wmissing-deriving-strategies -Wunused-packages -Winvalid-haddock -Wredundant-bang-patterns -Woperator-whitespace -Wredundant-strictness-flags -O1
   build-depends:
       base ==4.*
     , criterion

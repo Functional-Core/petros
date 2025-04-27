@@ -18,6 +18,10 @@ import Petros.Internal
 import Prelude hiding (Eq (..))
 import Prelude qualified
 import GHC.Records (HasField (..))
+import Data.Void
+import Data.Int
+import GHC.Natural
+import Data.Word
 
 class (PartialEq a) => Eq a where
     (==) :: a -> a -> Bool
@@ -70,9 +74,27 @@ instance (GEq f) => GEq (M1 i t f) where
 instance (Prelude.Eq a) => Eq (FromPrelude a) where
     x == y = liftPrelude2 (Prelude.==) x y
 
-deriving via (FromPrelude Ordering) instance Eq Ordering
+deriving via (FromPrelude Void) instance Eq Void
+deriving via (FromPrelude ()) instance Eq ()
 deriving via (FromPrelude Bool) instance Eq Bool
+deriving via (FromPrelude Char) instance Eq Char
+
 deriving via (FromPrelude Int) instance Eq Int
+deriving via (FromPrelude Int8) instance Eq Int8
+deriving via (FromPrelude Int16) instance Eq Int16
+deriving via (FromPrelude Int32) instance Eq Int32
+deriving via (FromPrelude Int64) instance Eq Int64
+
+deriving via (FromPrelude Integer) instance Eq Integer
+deriving via (FromPrelude Natural) instance Eq Natural
+
+deriving via (FromPrelude Word) instance Eq Word
+deriving via (FromPrelude Word8) instance Eq Word8
+deriving via (FromPrelude Word16) instance Eq Word16
+deriving via (FromPrelude Word32) instance Eq Word32
+deriving via (FromPrelude Word64) instance Eq Word64
+
+deriving via (FromPrelude Ordering) instance Eq Ordering
 
 --------------------------------------------------------------------------
 

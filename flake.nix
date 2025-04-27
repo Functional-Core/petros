@@ -45,7 +45,6 @@
           "-Wredundant-bang-patterns"
           "-Woperator-whitespace"
           "-Wredundant-strictness-flags"
-          "-Wmissing-safe-haskell-mode"
           "-O1"
         ];
 
@@ -87,12 +86,21 @@
           component.other-modules = [
             "Petros.Internal.Basics"
           ];
+          component.ghc-options = [
+            "-Wmissing-safe-haskell-mode"
+          ];
         };
 
         test = {
-          # TODDO
-          enable = false;
+          enable = true;
           dependencies = [
+            "hspec"
+            "hspec-api"
+            "hspec-discover"
+            "validity"
+            "genvalidity"
+            "genvalidity-property"
+            "QuickCheck"
           ];
         };
 

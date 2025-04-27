@@ -18,6 +18,10 @@ import GHC.Records (HasField (getField))
 import Petros.Internal
 import Prelude hiding (Eq (..))
 import Prelude qualified
+import Data.Int
+import Data.Word
+import GHC.Natural
+import Data.Void
 
 class PartialEq a where
     (~=) :: a -> a -> Bool
@@ -89,9 +93,55 @@ instance (Prelude.Eq a) => PartialEq (FromPrelude a) where
     (~=) = liftPrelude2 (Prelude.==)
     x ==? y = Just $ liftPrelude2 (Prelude.==) x y
 
-deriving via (FromPrelude Ordering) instance PartialEq Ordering
+deriving via (FromPrelude Void) instance PartialEq Void
+deriving via (FromPrelude ()) instance PartialEq ()
 deriving via (FromPrelude Bool) instance PartialEq Bool
+deriving via (FromPrelude Char) instance PartialEq Char
+
 deriving via (FromPrelude Int) instance PartialEq Int
+deriving via (FromPrelude Int8) instance PartialEq Int8
+deriving via (FromPrelude Int16) instance PartialEq Int16
+deriving via (FromPrelude Int32) instance PartialEq Int32
+deriving via (FromPrelude Int64) instance PartialEq Int64
+
+deriving via (FromPrelude Integer) instance PartialEq Integer
+deriving via (FromPrelude Natural) instance PartialEq Natural
+
+deriving via (FromPrelude Word) instance PartialEq Word
+deriving via (FromPrelude Word8) instance PartialEq Word8
+deriving via (FromPrelude Word16) instance PartialEq Word16
+deriving via (FromPrelude Word32) instance PartialEq Word32
+deriving via (FromPrelude Word64) instance PartialEq Word64
+
+instance PartialEq Float where
+    x ~= y
+        | isNaN x = False
+        | isNaN y = False
+        | otherwise = x Prelude.== y
+
+    x ==? y
+        | isNaN x = Nothing
+        | isNaN y = Nothing
+        | otherwise = Just (x Prelude.== y)
+    
+    {-# INLINE (~=) #-}
+    {-# INLINE (==?) #-}
+
+instance PartialEq Double where
+    x ~= y
+        | isNaN x = False
+        | isNaN y = False
+        | otherwise = x Prelude.== y
+
+    x ==? y
+        | isNaN x = Nothing
+        | isNaN y = Nothing
+        | otherwise = Just (x Prelude.== y)
+    
+    {-# INLINE (~=) #-}
+    {-# INLINE (==?) #-}
+
+deriving via (FromPrelude Ordering) instance PartialEq Ordering
 
 --------------------------------------------------------------------------
 
