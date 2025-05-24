@@ -27,9 +27,6 @@ source-repository head
 library
   exposed-modules:
       Petros
-      Petros.Algebra.Group
-      Petros.Algebra.Ring
-      Petros.Algebra.VectorSpace
       Petros.Binary
       Petros.Binary.Builder
       Petros.Eq
@@ -40,8 +37,6 @@ library
       Petros.Law
       Petros.Numeric
       Petros.Numeric.Complex
-      Petros.Numeric.Types
-      Petros.Numeric.Util
       Petros.Ord
       Petros.Ord.Lex
       Petros.Ord.Ord
@@ -63,7 +58,6 @@ library
       Petros.Time.Calendar.Quarter
       Petros.Time.Calendar.Week
       Petros.Time.Calendar.Year
-      Petros.Time.Clock
   other-modules:
       Petros.Internal.Basics
   hs-source-dirs:

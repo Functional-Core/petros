@@ -57,60 +57,13 @@
 
         meta = {
           maintainer = "james@functionalcore.dev";
-          category = "Prelude";
           github = "FunctionalCore/petros";
           extra-source-files = [ "README.md" ];
         };
       };
-
-      packages.petros-core = {
-        src = ./packages/petros-core;
-        versionFile = "ops/versions/petros-core.nix";
-
-        cabal.meta.synopsis = "Standard library and Prelude replacement.";
-
-        library = {
-          enable = true;
-          dependencies = [
-            "base"
-            "bytestring"
-            "text"
-            "containers"
-            "unordered-containers"
-            "hashable"
-            "deepseq"
-            "unliftio"
-            "time"
-            "semirings"
-          ];
-          component.other-modules = [
-            "Petros.Internal.Basics"
-          ];
-          component.ghc-options = [
-            "-Wmissing-safe-haskell-mode"
-          ];
-        };
-
-        test = {
-          enable = true;
-          dependencies = [
-            "hspec"
-            "hspec-api"
-            "hspec-discover"
-            "validity"
-            "genvalidity"
-            "genvalidity-property"
-            "QuickCheck"
-          ];
-        };
-
-        benchmark = {
-          enable = true;
-          dependencies = [
-            "criterion"
-          ];
-        };
-      };
+      
+      packages.petros-core = import ./ops/packages/petros-core.nix;
+      packages.petros-test = import ./ops/packages/petros-test.nix;
     };
 }
 
