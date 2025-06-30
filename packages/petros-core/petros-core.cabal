@@ -27,6 +27,12 @@ source-repository head
 library
   exposed-modules:
       Petros
+      Petros.Algebra.Field
+      Petros.Algebra.Group
+      Petros.Algebra.Monoid
+      Petros.Algebra.Ring
+      Petros.Algebra.Semigroup
+      Petros.Algebra.Semiring
       Petros.Binary
       Petros.Binary.Builder
       Petros.Eq
@@ -37,11 +43,16 @@ library
       Petros.Law
       Petros.Numeric
       Petros.Numeric.Complex
+      Petros.Numeric.Positive
+      Petros.Numeric.Primitives
       Petros.Ord
       Petros.Ord.Lex
       Petros.Ord.Ord
       Petros.Ord.PartialOrd
       Petros.Ord.Strict
+      Petros.Refined
+      Petros.Refined2
+      Petros.Refinements
       Petros.Text
       Petros.Text.Builder
       Petros.Text.Char
@@ -64,6 +75,25 @@ library
       lib
   default-extensions:
       NoImplicitPrelude
+      BlockArguments
+      DataKinds
+      DefaultSignatures
+      DeriveAnyClass
+      DerivingStrategies
+      DuplicateRecordFields
+      FunctionalDependencies
+      GADTs
+      ImportQualifiedPost
+      LambdaCase
+      MultiWayIf
+      OverloadedRecordDot
+      OverloadedStrings
+      PartialTypeSignatures
+      PatternSynonyms
+      QuasiQuotes
+      TemplateHaskell
+      TypeFamilies
+      TypeFamilyDependencies
   ghc-options: -fhide-source-paths -Wall -Wcompat -Widentities -Wimplicit-prelude -Wredundant-constraints -Wmissing-export-lists -Wmissing-deriving-strategies -Wunused-packages -Winvalid-haddock -Wredundant-bang-patterns -Woperator-whitespace -Wredundant-strictness-flags -O1 -Wmissing-safe-haskell-mode
   build-depends:
       base
@@ -71,6 +101,7 @@ library
     , containers
     , deepseq
     , hashable
+    , refined
     , semirings
     , text
     , time
@@ -90,6 +121,25 @@ test-suite petros-core-test
       test
   default-extensions:
       NoImplicitPrelude
+      BlockArguments
+      DataKinds
+      DefaultSignatures
+      DeriveAnyClass
+      DerivingStrategies
+      DuplicateRecordFields
+      FunctionalDependencies
+      GADTs
+      ImportQualifiedPost
+      LambdaCase
+      MultiWayIf
+      OverloadedRecordDot
+      OverloadedStrings
+      PartialTypeSignatures
+      PatternSynonyms
+      QuasiQuotes
+      TemplateHaskell
+      TypeFamilies
+      TypeFamilyDependencies
   ghc-options: -fhide-source-paths -Wall -Wcompat -Widentities -Wimplicit-prelude -Wredundant-constraints -Wmissing-export-lists -Wmissing-deriving-strategies -Wunused-packages -Winvalid-haddock -Wredundant-bang-patterns -Woperator-whitespace -Wredundant-strictness-flags -O1 -threaded -rtsopts -with-rtsopts=-N
   build-depends:
       QuickCheck
@@ -113,6 +163,25 @@ benchmark petros-core-bench
       benchmark
   default-extensions:
       NoImplicitPrelude
+      BlockArguments
+      DataKinds
+      DefaultSignatures
+      DeriveAnyClass
+      DerivingStrategies
+      DuplicateRecordFields
+      FunctionalDependencies
+      GADTs
+      ImportQualifiedPost
+      LambdaCase
+      MultiWayIf
+      OverloadedRecordDot
+      OverloadedStrings
+      PartialTypeSignatures
+      PatternSynonyms
+      QuasiQuotes
+      TemplateHaskell
+      TypeFamilies
+      TypeFamilyDependencies
   ghc-options: -fhide-source-paths -Wall -Wcompat -Widentities -Wimplicit-prelude -Wredundant-constraints -Wmissing-export-lists -Wmissing-deriving-strategies -Wunused-packages -Winvalid-haddock -Wredundant-bang-patterns -Woperator-whitespace -Wredundant-strictness-flags -O1
   build-depends:
       base ==4.*

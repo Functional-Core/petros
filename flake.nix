@@ -53,6 +53,25 @@
         # TODO: Extract these into a shared flake
         default-extensions = [
           "NoImplicitPrelude"
+          "BlockArguments"
+          "DataKinds"
+          "DefaultSignatures"
+          "DeriveAnyClass"
+          "DerivingStrategies"
+          "DuplicateRecordFields"
+          "FunctionalDependencies"
+          "GADTs"
+          "ImportQualifiedPost"
+          "LambdaCase"
+          "MultiWayIf"
+          "OverloadedRecordDot"
+          "OverloadedStrings"
+          "PartialTypeSignatures"
+          "PatternSynonyms"
+          "QuasiQuotes"
+          "TemplateHaskell"
+          "TypeFamilies"
+          "TypeFamilyDependencies"
         ];
 
         meta = {

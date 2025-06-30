@@ -37,6 +37,25 @@ library
       lib
   default-extensions:
       NoImplicitPrelude
+      BlockArguments
+      DataKinds
+      DefaultSignatures
+      DeriveAnyClass
+      DerivingStrategies
+      DuplicateRecordFields
+      FunctionalDependencies
+      GADTs
+      ImportQualifiedPost
+      LambdaCase
+      MultiWayIf
+      OverloadedRecordDot
+      OverloadedStrings
+      PartialTypeSignatures
+      PatternSynonyms
+      QuasiQuotes
+      TemplateHaskell
+      TypeFamilies
+      TypeFamilyDependencies
   ghc-options: -fhide-source-paths -Wall -Wcompat -Widentities -Wimplicit-prelude -Wredundant-constraints -Wmissing-export-lists -Wmissing-deriving-strategies -Wunused-packages -Winvalid-haddock -Wredundant-bang-patterns -Woperator-whitespace -Wredundant-strictness-flags -O1 -Wmissing-safe-haskell-mode
   build-depends:
       QuickCheck
@@ -78,6 +97,25 @@ test-suite petros-test-test
       test
   default-extensions:
       NoImplicitPrelude
+      BlockArguments
+      DataKinds
+      DefaultSignatures
+      DeriveAnyClass
+      DerivingStrategies
+      DuplicateRecordFields
+      FunctionalDependencies
+      GADTs
+      ImportQualifiedPost
+      LambdaCase
+      MultiWayIf
+      OverloadedRecordDot
+      OverloadedStrings
+      PartialTypeSignatures
+      PatternSynonyms
+      QuasiQuotes
+      TemplateHaskell
+      TypeFamilies
+      TypeFamilyDependencies
   ghc-options: -fhide-source-paths -Wall -Wcompat -Widentities -Wimplicit-prelude -Wredundant-constraints -Wmissing-export-lists -Wmissing-deriving-strategies -Wunused-packages -Winvalid-haddock -Wredundant-bang-patterns -Woperator-whitespace -Wredundant-strictness-flags -O1 -threaded -rtsopts -with-rtsopts=-N
   build-depends:
       base ==4.*

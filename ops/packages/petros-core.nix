@@ -20,6 +20,7 @@
       "unliftio"
       "time"
       "semirings"
+      "refined"
     ];
     component.other-modules = [
       "Petros.Internal.Basics"
