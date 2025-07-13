@@ -221,6 +221,10 @@ type Test7 = CNF (Ors '[Ands '[Var "x", Var "y"], Ands '[Var "a", Var "b"]])
 --   , Ors '[Var "a", Var "y"]
 --   , Ors '[Var "b", Var "y"]
 --   ]
+--
+-- type Test7 = CNF (Ors '[Ands '[Var "x", Var "y"], Ands '[Var "a", Var "b"]])
+
+
 
 -- Is it true that
 --  Ors [ Ands [ a, b ], x, Ands [ c, d ], y ]
