@@ -21,6 +21,7 @@
       "time"
       "semirings"
       "refined"
+      "first-class-families"
     ];
     component.other-modules = [
       "Petros.Internal.Basics"

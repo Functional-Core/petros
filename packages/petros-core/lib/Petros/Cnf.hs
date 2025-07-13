@@ -73,6 +73,12 @@ splitAnds = go ([], [])
         go (ands, others) (p:ps) =
             go (ands, p : others) ps
 
+splitAnds2 :: [Pred] -> ([Pred], [Pred])
+splitAnds2 = foldr something ([], [])
+    where
+        something (And qs) (ands, others) = (And qs : ands, others)
+        something p (ands, others) = (ands, p : others)
+
 cnf_ :: Pred -> Pred
 cnf_ (Var c) = Var c
 cnf_ (Not p) = Not p -- nnf ensures p is a var
@@ -161,26 +167,3 @@ test7 = cnf input7 == cnf7
 -- tests 6 and 7 technically fail right now due to ordering but the output is still correct
 --
 -- ordering won't be an issue in our real version since we'll be using sets
-
-type family PrependAll (x :: k) (yss :: [[k]]) :: [[k]] where
-  PrependAll x '[] = '[]
-  PrependAll x (ys ': yss) = (x ': ys) ': PrependAll x yss
-
-type family Append (xs :: [k]) (ys :: [k]) :: [k] where
-  Append '[] ys = ys
-  Append (x ': xs) ys = x ': Append xs ys
-
-
-type family ConcatMap (f :: k -> [[l]]) (xs :: [k]) :: [[l]] where
-  ConcatMap f '[] = '[]
-  ConcatMap f (x ': xs) = Append (f x) (ConcatMap f xs)
-
-type family FlipPrependAll (yss :: [[k]]) (x :: k) :: [[k]] where
-  FlipPrependAll yss x = PrependAll x yss
-
--- type family CartProd (xss :: [[k]]) :: [[k]] where
---   CartProd '[] = '[ '[] ]
---   CartProd (xs ': xss) = ConcatMap (FlipPrependAll (CartProd xss)) xs
-
-
--- https://hackage.haskell.org/package/singletons-3.0.4/docs/Data-Singletons.html#t:-126--62-

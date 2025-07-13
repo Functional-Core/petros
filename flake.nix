@@ -85,6 +85,3 @@
       packages.petros-test = import ./ops/packages/petros-test.nix;
     };
 }
-
-# TODO
-# In the future we might want different files for the packages._____ definitions.

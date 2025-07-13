@@ -36,11 +36,13 @@ library
       Petros.Binary
       Petros.Binary.Builder
       Petros.Cnf
+      Petros.CnfTypes
       Petros.Eq
       Petros.Eq.Eq
       Petros.Eq.PartialEq
       Petros.Experimental.Bob
       Petros.Experimental.Records
+      Petros.Experimental.TypeLevel
       Petros.Internal
       Petros.Law
       Petros.Numeric
@@ -102,6 +104,7 @@ library
     , bytestring
     , containers
     , deepseq
+    , first-class-families
     , hashable
     , refined
     , semirings
