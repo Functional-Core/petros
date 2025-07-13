@@ -35,10 +35,12 @@ library
       Petros.Algebra.Semiring
       Petros.Binary
       Petros.Binary.Builder
+      Petros.Cnf
       Petros.Eq
       Petros.Eq.Eq
       Petros.Eq.PartialEq
       Petros.Experimental.Bob
+      Petros.Experimental.Records
       Petros.Internal
       Petros.Law
       Petros.Numeric
