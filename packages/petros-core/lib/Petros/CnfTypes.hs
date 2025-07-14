@@ -63,15 +63,15 @@ data FlattenOrs :: p -> Exp p
 type instance Eval (FlattenOrs (Var l)) = Var l
 type instance Eval (FlattenOrs (Not p)) = Not (FlattenOrs @@ p)
 type instance Eval (FlattenOrs (Ands ps)) = Ands (FMap FlattenOrs @@ ps)
-type instance Eval (FlattenOrs (Ors ps)) = Ors (ConcatMap FlattenOrs @@ ps)
+type instance Eval (FlattenOrs (Ors ps)) = Ors (ConcatMap FlattenOrs_ @@ ps)
 
 data Normalise :: p -> Exp p
 type instance Eval (Normalise (Var l)) = Var l
 type instance Eval (Normalise (Not p)) = Not (Normalise @@ p)
 type instance Eval (Normalise (Ands ps)) =
-    UnwrapSingletons @@ FlattenAnds @@ Ands (FMap Normalise @@ ps)
+    UnwrapSingletons @@ (FlattenAnds @@ (Ands (FMap Normalise @@ ps)))
 type instance Eval (Normalise (Ors ps)) =
-    UnwrapSingletons @@ FlattenOrs @@ Ors (FMap Normalise @@ ps)
+    UnwrapSingletons @@ (FlattenOrs @@ (Ors (FMap Normalise @@ ps)))
 
 type family ContainsAnd (ps :: [Type]) :: Bool where
     ContainsAnd '[] = 'False
@@ -111,7 +111,11 @@ type instance Eval (DistributeMakeOr others xs) = Ors (Eval (xs ++ others))
 
 data DistributeContainsAnd :: [[p]] -> [p] -> Exp p
 type instance Eval (DistributeContainsAnd ands others) =
-    Cnf_ @@ Ands (FMap (DistributeMakeOr others) @@ (CartProd @@ ands))
+    (Ands (FMap (DistributeMakeOr others) @@ (CartProd @@ ands)))
+    -- FIXME
+    -- supposed to wrap in Cnf_ here but that infinite loops
+    -- not sure why it doesn't in the value level implementation
+    -- need to figure out the difference
 
 data Distribute :: [p] -> Exp p
 type instance Eval (Distribute ps) =
@@ -123,9 +127,74 @@ data Cnf_ :: p -> Exp p
 type instance Eval (Cnf_ (Var l)) = Var l
 type instance Eval (Cnf_ (Not p)) = Not p -- nnf ensures p is a var
 type instance Eval (Cnf_ (Ands ps)) = Normalise @@ (Ands (FMap Cnf_ @@ ps))
-type instance Eval (Cnf_ (Ors ps)) = Normalise @@ Distribute @@ (FMap Cnf_ @@ ps)
+type instance Eval (Cnf_ (Ors ps)) = Normalise @@ (Distribute @@ (FMap Cnf_ @@ ps))
 
 data Cnf :: p -> Exp p
-type instance Eval (Cnf p) = Cnf_ @@ Nnf @@ p
+type instance Eval (Cnf p) = Cnf_ @@ (Nnf @@ p)
 
+type Test i o = (Cnf @@ i) ~ o
 
+type Input1 = Var "x"
+type Output1 = Var "x"
+type Test1 = Test Input1 Output1
+
+type Input2 = Not (Var "x")
+type Output2 = Not (Var "x")
+type Test2 = Test Input2 Output2
+
+type Input3 = Ors '[Var "a", Not (Var "b")]
+type Output3 = Ors '[Var "a", Not (Var "b")]
+type Test3 = Test Input3 Output3
+
+type Input4 = Ands [Ors [Var "a", Var "b"], Ors [Not (Var "c"), Var "d"]]
+type Output4 = Ands [Ors [Var "a", Var "b"], Ors [Not (Var "c"), Var "d"]]
+type Test4 = Test Input4 Output4
+
+type Input5 = Not (Ands [Var "a", Var "b"])
+type Output5 = Ors [Not (Var "a"), Not (Var "b")]
+type Test5 = Test Input5 Output5
+
+type Input6 = Ors [Var "a", Ands [Var "b", Var "c"]]
+type Output6 = ()
+type Test6 = Test Input6 Output6
+
+type Input7 = Ors [Ands [Var "a", Var "b"], Var "c", Ands [Var "d", Var "e"]]
+type Output7 = ()
+type Test7 = Test Input7 Output7
+
+type X = Cnf @@ Input8
+type Input8 = Ors [Ands [Var "a", Ors [Var "x", Ands [Var "y", Var "z"]]], Var "b"]
+type Output8 = ()
+type Test8 = Test Input8 Output8
+
+-- test1 :: Test1 => Int
+-- test1 = 42
+--
+-- test2 :: Test2 => Int
+-- test2 = 42
+--
+-- test3 :: Test3 => Int
+-- test3 = 42
+--
+-- test4 :: Test4 => Int
+-- test4 = 42
+--
+-- test5 :: Test5 => Int
+-- test5 = 42
+--
+-- test6 :: Test6 => Int
+-- test6 = 42
+--
+-- test7 :: Test7 => Int
+-- test7 = 42
+
+-- tests :: [Int]
+-- tests =
+--     [ test1
+--     , test2
+--     , test3
+--     , test4
+--     , test5
+--     , test6
+--     , test7
+--     ]
