@@ -62,35 +62,34 @@ containsAnd (And _ : _) = True
 containsAnd (_ : ps) = containsAnd ps
 
 cartProd :: [[a]] -> [[a]]
-cartProd = sequence
-
-splitAnds :: [Pred] -> ([Pred], [Pred])
-splitAnds = go ([], [])
+cartProd = foldr cartProdApplyList [[]]
     where
-        go res [] = res
-        go (ands, others) (And qs : ps) =
-            go (And qs : ands, others) ps
-        go (ands, others) (p:ps) =
-            go (ands, p : others) ps
+        cartProdApplyList xs acc = concatMap (cartProdApplyElem acc) xs
+        cartProdApplyElem acc x = fmap (x :) acc
 
-splitAnds2 :: [Pred] -> ([Pred], [Pred])
-splitAnds2 = foldr something ([], [])
+splitAnds :: [Pred] -> ([[Pred]], [Pred])
+splitAnds = foldr something ([], [])
     where
-        something (And qs) (ands, others) = (And qs : ands, others)
+        something (And qs) (ands, others) = (qs : ands, others)
         something p (ands, others) = (ands, p : others)
+
+distributeMakeOr :: [Pred] -> [Pred] -> Pred
+distributeMakeOr others xs = Or (xs ++ others)
+
+distributeContainsAnd :: [[Pred]] -> [Pred] -> [Pred]
+distributeContainsAnd ands others = fmap (distributeMakeOr others) (cartProd ands)
+
+distribute :: [Pred] -> Pred
+distribute ps =
+    if containsAnd ps
+        then cnf_ $ And $ uncurry distributeContainsAnd (splitAnds ps)
+        else Or ps
 
 cnf_ :: Pred -> Pred
 cnf_ (Var c) = Var c
 cnf_ (Not p) = Not p -- nnf ensures p is a var
 cnf_ (And ps) = normalise $ And (map cnf_ ps)
 cnf_ (Or ps) = normalise $ distribute $ map cnf_ ps
-    where
-        distribute qs
-            | containsAnd qs =
-                let (ands, others) = splitAnds qs
-                    innerAnds = [as | And as <- ands]
-                 in cnf_ $ And $ [Or (xs ++ others) | xs <- cartProd innerAnds]
-            | otherwise = Or qs
 
 cnf :: Pred -> Pred
 cnf = cnf_ . nnf

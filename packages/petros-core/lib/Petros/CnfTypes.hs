@@ -3,7 +3,7 @@
 
 module Petros.CnfTypes where
 
-import Fcf (Eval, Exp, type (<=<), Pure1, type (@@), Foldr, type (++), If, Uncurry)
+import Fcf (Eval, Exp, type (<=<), Pure1, type (@@), Foldr, type (++), Uncurry)
 import GHC.TypeLits
 import Fcf.Class.Functor (FMap)
 import Data.Kind (Type)
@@ -109,25 +109,20 @@ type instance Eval (SplitAnds ps) = Foldr SplitAndsInnerExp SplitAndsInit @@ ps
 data DistributeMakeOr :: [p] -> [p] -> Exp p
 type instance Eval (DistributeMakeOr others xs) = Ors (Eval (xs ++ others))
 
-data DistributeContainsAnd :: [[p]] -> [p] -> Exp p
+data DistributeContainsAnd :: [[p]] -> [p] -> Exp [p]
 type instance Eval (DistributeContainsAnd ands others) =
-    (Ands (FMap (DistributeMakeOr others) @@ (CartProd @@ ands)))
-    -- FIXME
-    -- supposed to wrap in Cnf_ here but that infinite loops
-    -- not sure why it doesn't in the value level implementation
-    -- need to figure out the difference
+    FMap (DistributeMakeOr others) @@ (CartProd @@ ands)
 
-data Distribute :: [p] -> Exp p
-type instance Eval (Distribute ps) =
-    If (ContainsAnd ps)
-        (Uncurry DistributeContainsAnd @@ (SplitAnds @@ ps))
-        (Ors ps)
+data Distribute :: Bool -> [p] -> Exp p
+type instance Eval (Distribute 'True ps) = 
+    Cnf_ @@ Ands (Uncurry DistributeContainsAnd @@ (SplitAnds @@ ps))
+type instance Eval (Distribute 'False ps) = Ors ps
 
 data Cnf_ :: p -> Exp p
 type instance Eval (Cnf_ (Var l)) = Var l
 type instance Eval (Cnf_ (Not p)) = Not p -- nnf ensures p is a var
 type instance Eval (Cnf_ (Ands ps)) = Normalise @@ (Ands (FMap Cnf_ @@ ps))
-type instance Eval (Cnf_ (Ors ps)) = Normalise @@ (Distribute @@ (FMap Cnf_ @@ ps))
+type instance Eval (Cnf_ (Ors ps)) = Normalise @@ (Distribute (ContainsAnd ps) @@ (FMap Cnf_ @@ ps))
 
 data Cnf :: p -> Exp p
 type instance Eval (Cnf p) = Cnf_ @@ (Nnf @@ p)
@@ -162,10 +157,20 @@ type Input7 = Ors [Ands [Var "a", Var "b"], Var "c", Ands [Var "d", Var "e"]]
 type Output7 = ()
 type Test7 = Test Input7 Output7
 
-type X = Cnf @@ Input8
 type Input8 = Ors [Ands [Var "a", Ors [Var "x", Ands [Var "y", Var "z"]]], Var "b"]
 type Output8 = ()
 type Test8 = Test Input8 Output8
+
+type Input9 = Ands [
+    Ors [Var "a", Var "b"],
+    Ors [Var "x", Var "b"],
+    Ors [Var "y", Var "b"],
+    Ors [Var "z", Var "b"]
+    ]
+type Output9 = ()
+type Test9 = Test Input9 Output9
+
+type X = Cnf @@ Input9
 
 -- test1 :: Test1 => Int
 -- test1 = 42
