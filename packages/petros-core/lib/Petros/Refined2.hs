@@ -9,6 +9,12 @@ import Data.Kind
 import Data.Type.Ord
 import GHC.TypeLits
 import Prelude
+import Fcf (Eval, Exp, type (<=<), Pure1, type (@@), Foldr, type (++), Uncurry)
+import Fcf.Class.Functor (FMap)
+import Fcf.Data.List (ConcatMap)
+import Data.Proxy (Proxy(..))
+import Fcf.Class.Monoid (type (<>))
+import Data.Type.Bool (type (&&))
 
 type family Nub (xs :: [k]) :: [k] where
     Nub xs = Nub_ xs '[]
@@ -40,21 +46,9 @@ type family Set (xs :: [k]) :: [k] where
 
 ------------------------------------------------------------
 
-class Predicate (p :: Type) a where
-    type Label p :: Symbol
-    check :: a -> Bool
-
-data Positive
-
-instance (Num a, Ord a) => Predicate Positive a where
-    type Label Positive = "Positive"
-    check n = n > 0
-
-------------------------------------------------------------
-
 -- Predicate definitions
 
-data Var (s :: Symbol)
+data Var (p :: k)
 data Not (p :: k)
 data Ors (ps :: [k])
 data Ands (ps :: [k])
@@ -64,235 +58,273 @@ type And p q = Ands [p, q]
 
 ------------------------------------------------------------
 
-type family Map (f :: kx -> ky) (xs :: [kx]) :: [ky] where
-    Map _ '[] = '[]
-    Map f (x ': xs) = (f x) ': Map f xs
+type family MoveNotIn (ps :: [Type]) :: [Type] where
+    MoveNotIn ps = FMap (Nnf <=< Pure1 Not) @@ ps
 
-type family (xs :: [k]) ++ (ys :: [k]) :: [k] where
-    '[] ++ ys = ys
-    xs ++ '[] = xs
-    (x ': xs) ++ ys = x ': (xs ++ ys)
+data Nnf :: p -> Exp p
+type instance Eval (Nnf (Var l)) = Var l
+type instance Eval (Nnf (Ands ps)) = Ands (FMap Nnf @@ ps)
+type instance Eval (Nnf (Ors ps)) = Ors (FMap Nnf @@ ps)
+type instance Eval (Nnf (Not (Var l))) = Not (Var l)
+type instance Eval (Nnf (Not (Not p))) = Nnf @@ p
+type instance Eval (Nnf (Not (Ands ps))) = Ors (MoveNotIn ps)
+type instance Eval (Nnf (Not (Ors ps))) = Ands (MoveNotIn ps)
 
-type family NNF (p :: Type) :: Type where
-    NNF (Not (Not p)) = NNF p
-    NNF (Not (Ors ps)) = Ands (Map Not ps)
-    NNF (Not (Ands ps)) = Ors (Map Not ps)
-    NNF (Not p) = Not (NNF p)
-    NNF (Ands ps) = Ands (MapNnf ps)
-    NNF (Ors ps) = Ors (MapNnf ps)
-    NNF (Var s) = Var s
+type family UnwrapAndsOrs (p :: Type) :: Type where
+    UnwrapAndsOrs (Ands '[p]) = p
+    UnwrapAndsOrs (Ands ps) = Ands (FMap UnwrapSingletons @@ ps)
+    UnwrapAndsOrs (Ors '[p]) = p
+    UnwrapAndsOrs (Ors ps) = Ors (FMap UnwrapSingletons @@ ps)
 
-type family MapNnf (ps :: [Type]) :: [Type] where
-    MapNnf '[] = '[]
-    MapNnf (p ': ps) = NNF p ': MapNnf ps
+data UnwrapSingletons :: p -> Exp p
+type instance Eval (UnwrapSingletons (Var l)) = Var l
+type instance Eval (UnwrapSingletons (Not p)) = Not (UnwrapSingletons @@ p)
+type instance Eval (UnwrapSingletons (Ands ps)) = UnwrapAndsOrs (Ands ps)
+type instance Eval (UnwrapSingletons (Ors ps)) = UnwrapAndsOrs (Ors ps)
 
-type family FlattenAnds (ps :: [Type]) :: [Type] where
-    FlattenAnds '[] = '[]
-    FlattenAnds (Ands qs ': ps) = qs ++ FlattenAnds ps
-    FlattenAnds (p ': ps) = p ': FlattenAnds ps
+type family FlattenAnd (p :: Type) :: [Type] where
+    FlattenAnd (Ands qs) = qs
+    FlattenAnd q = '[q]
 
-type family FlattenOrs (ps :: [Type]) :: [Type] where
-    FlattenOrs '[] = '[]
-    FlattenOrs (Ors qs ': ps) = qs ++ FlattenOrs ps
-    FlattenOrs (p ': ps) = p ': FlattenOrs ps
+data FlattenAnds_ :: p -> Exp [p]
+type instance Eval (FlattenAnds_ p) = FlattenAnd p
 
-type family ContainsAnds (ps :: [Type]) :: Bool where
-    ContainsAnds '[] = 'False
-    ContainsAnds (Ands _ ': _) = 'True
-    ContainsAnds (_ ': ps) = ContainsAnds ps
+data FlattenAnds :: p -> Exp p
+type instance Eval (FlattenAnds (Var l)) = Var l
+type instance Eval (FlattenAnds (Not p)) = Not (FlattenAnds @@ p)
+type instance Eval (FlattenAnds (Ands ps)) = Ands (ConcatMap FlattenAnds_ @@ ps)
+type instance Eval (FlattenAnds (Ors ps)) = Ors (FMap FlattenAnds @@ ps)
 
-type family IfThenElse (b :: Bool) (t :: k) (f :: k) :: k where
-    IfThenElse 'True t _ = t
-    IfThenElse 'False _ f = f
+type family FlattenOr (p :: Type) :: [Type] where
+    FlattenOr (Ors qs) = qs
+    FlattenOr q = '[q]
 
--- Called on the list of predicates within an `Ands`.
-type family DistributePred (as :: [Type]) (ps :: [Type]) :: [Type] where
-    DistributePred '[] _ = '[]
-    DistributePred (a ': as) ps = CNF (Ors (a ': ps)) ': DistributePred as ps
+data FlattenOrs_ :: p -> Exp [p]
+type instance Eval (FlattenOrs_ p) = FlattenOr p
 
-type family MapDistributePred (ps :: [Type]) (prevPs :: [Type]) (nextPs :: [Type]) :: [Type] where
-    MapDistributePred '[] _ _ = '[]
-    MapDistributePred (Ands as ': ps) prevPs (this ': nextPs) =
-        DistributePred as (prevPs ++ nextPs) ++ MapDistributePred ps (this ': prevPs) nextPs
-    MapDistributePred (p ': ps) prevPs (_ ': nextPs) = MapDistributePred ps (p ': prevPs) nextPs
+data FlattenOrs :: p -> Exp p
+type instance Eval (FlattenOrs (Var l)) = Var l
+type instance Eval (FlattenOrs (Not p)) = Not (FlattenOrs @@ p)
+type instance Eval (FlattenOrs (Ands ps)) = Ands (FMap FlattenOrs @@ ps)
+type instance Eval (FlattenOrs (Ors ps)) = Ors (ConcatMap FlattenOrs_ @@ ps)
 
-type family MapDistributePredIfAnds (ps :: [Type]) :: Type where
-    MapDistributePredIfAnds ps =
-        IfThenElse
-            (ContainsAnds ps)
-            (Ands (MapDistributePred ps '[] ps))
-            (Ors ps)
+data Normalise :: p -> Exp p
+type instance Eval (Normalise (Var l)) = Var l
+type instance Eval (Normalise (Not p)) = Not (Normalise @@ p)
+type instance Eval (Normalise (Ands ps)) =
+    UnwrapSingletons @@ (FlattenAnds @@ (Ands (FMap Normalise @@ ps)))
+type instance Eval (Normalise (Ors ps)) =
+    UnwrapSingletons @@ (FlattenOrs @@ (Ors (FMap Normalise @@ ps)))
 
-type family NnfToCnf (p :: Type) :: Type where
-    NnfToCnf (Ands ps) = Ands (FlattenAnds (MapCnf ps))
-    NnfToCnf (Ors ps) = MapDistributePredIfAnds (FlattenOrs (MapCnf ps))
-    NnfToCnf p = p
+type family ContainsAnd (ps :: [Type]) :: Bool where
+    ContainsAnd '[] = 'False
+    ContainsAnd (Ands _ ': _) = 'True
+    ContainsAnd (_ ': ps) = ContainsAnd ps
 
-type family MapCnf (ps :: [Type]) :: [Type] where
-    MapCnf '[] = '[]
-    MapCnf (p ': ps) = NnfToCnf p ': MapCnf ps
+data Cons :: a -> [a] -> Exp [a]
+type instance Eval (Cons x xs) = x ': xs
 
-type family CNF (p :: Type) :: Type where
-    CNF p = NnfToCnf (NNF p)
+data CartProdApplyElem :: [[a]] -> a -> Exp [[a]]
+type instance Eval (CartProdApplyElem acc x) = FMap (Cons x) @@ acc
 
--- TODO:
--- need to implement type instance Compare for (Or)
+data CartProdApplyList :: [a] -> [[a]] -> Exp [[a]]
+type instance Eval (CartProdApplyList xs acc) = ConcatMap (CartProdApplyElem acc) @@ xs
+
+type CartProdInit = '[ '[] ]
+
+data CartProd :: [[a]] -> Exp [[a]]
+type instance Eval (CartProd xss) = Foldr CartProdApplyList CartProdInit @@ xss
+
+type TestCartProd = CartProd @@ '[ '[1,2,3], '[4,5,6], '[7,8,9] ]
+
+type family SplitAndsInner (p :: Type) (res :: ([[Type]], [Type])) :: ([[Type]], [Type]) where
+    SplitAndsInner (Ands ps) '(ands, others) = '( ps ': ands, others )
+    SplitAndsInner p '(ands, others) = '( ands, p ': others )
+
+data SplitAndsInnerExp :: p -> ([[p]], [p]) -> Exp ([[p]], [p])
+type instance Eval (SplitAndsInnerExp p res) = SplitAndsInner p res
+
+type SplitAndsInit = '( '[], '[] )
+
+data SplitAnds :: [p] -> Exp ([[p]], [p])
+type instance Eval (SplitAnds ps) = Foldr SplitAndsInnerExp SplitAndsInit @@ ps
+
+data DistributeMakeOr :: [p] -> [p] -> Exp p
+type instance Eval (DistributeMakeOr others xs) = Ors (Eval (xs ++ others))
+
+data DistributeContainsAnd :: [[p]] -> [p] -> Exp [p]
+type instance Eval (DistributeContainsAnd ands others) =
+    FMap (DistributeMakeOr others) @@ (CartProd @@ ands)
+
+data Distribute :: Bool -> [p] -> Exp p
+type instance Eval (Distribute 'True ps) = 
+    Cnf_ @@ Ands (Uncurry DistributeContainsAnd @@ (SplitAnds @@ ps))
+type instance Eval (Distribute 'False ps) = Ors ps
+
+data Cnf_ :: p -> Exp p
+type instance Eval (Cnf_ (Var l)) = Var l
+type instance Eval (Cnf_ (Not p)) = Not p -- nnf ensures p is a var
+type instance Eval (Cnf_ (Ands ps)) = Normalise @@ (Ands (FMap Cnf_ @@ ps))
+type instance Eval (Cnf_ (Ors ps)) = Normalise @@ (Distribute (ContainsAnd ps) @@ (FMap Cnf_ @@ ps))
+
+data Cnf :: p -> Exp p
+type instance Eval (Cnf p) = Cnf_ @@ (Nnf @@ p)
+
+type CNF p = Eval (Cnf p)
 
 ------------------------------------------------------------
 
--- Test Cases
+type family ShowNat (n :: Nat) :: Symbol where
+    ShowNat 0 = "0"
+    ShowNat 1 = "1"
+    ShowNat 2 = "2"
+    ShowNat 3 = "3"
+    ShowNat 4 = "4"
+    ShowNat 5 = "5"
+    ShowNat 6 = "6"
+    ShowNat 7 = "7"
+    ShowNat 8 = "8"
+    ShowNat 9 = "9"
+    ShowNat n = ShowNat (Div n 10) <> ShowNat (Mod n 10)
 
--- 1. Simple atom
-type Test1 = CNF (Var "x") 
--- Should be: Var "x"
+type family CmpElem (ord :: Ordering) (xs :: [k]) (ys :: [k]) :: Ordering where
+    CmpElem 'EQ xs ys = CmpList xs ys
+    CmpElem ord _ _ = ord
 
--- 2. Simple Not
-type Test2 = CNF (Not (Var "x"))
--- Should be: Not (Var "x")
+type family CmpList (xs :: [k]) (ys :: [k]) :: Ordering where
+    CmpList '[] '[] = 'EQ
+    CmpList '[] _ = 'LT
+    CmpList _ '[] = 'GT
+    CmpList (x ': xs) (y ': ys) = CmpElem (Compare x y) xs ys
 
--- 3. Double negation
-type Test3 = CNF (Not (Not (Var "x")))
--- Should be: Var "x"
+-- Instances are incomplete and heavily influenced by already
+-- being in CNF.
+type instance Compare (Var x) (Var y) = CmpSymbol (Label x) (Label y)
 
--- 4. Or of two atoms
-type Test4 = CNF (Ors '[Var "x", Var "y"])
--- Should be: Ors '[Var "x", Var "y"]
+type instance Compare (Var x) (Not (Var y)) =
+    CmpSymbol (Label x) (Label (Not (Var y)))
+type instance Compare (Not (Var x)) (Var y) =
+    CmpSymbol (Label (Not (Var x))) (Label y)
+type instance Compare (Not (Var x)) (Not (Var y)) =
+    CmpSymbol (Label (Not (Var x))) (Label (Not (Var y)))
 
--- 5. And of two atoms
-type Test5 = CNF (Ands '[Var "x", Var "y"])
--- Should be: Ands '[Var "x", Var "y"]
+type instance Compare (Ors _) (Var _) = 'GT
+type instance Compare (Ors _) (Not _) = 'GT
+type instance Compare (Var _) (Ors _) = 'LT
+type instance Compare (Not _) (Ors _) = 'LT
+type instance Compare (Ors ps) (Ors qs) = CmpList ps qs
 
--- 6. Or of And
-type Test6 = CNF (Ors '[Ands '[Var "x", Var "y"], Var "z"])
--- Should be: Ands '[Ors '[Var "x", Var "z"], Ors '[Var "y", Var "z"]]
+type instance Compare (Ands ps) (Ands qs) = CmpList ps qs
 
--- 7. Or of nested And
-type Test7 = CNF (Ors '[Ands '[Var "x", Var "y"], Ands '[Var "a", Var "b"]])
--- Should be: Ands '[Ors '[Var "x", Ands '[Var "a", Var "b"]], Ors '[Var "y", Ands '[Var "a", Var "b"]]]
---
--- distribute
---
--- Ands
---  '[ Ors '[Var "x", Ands '[Var "a", Var "b"]]
---   , Ors '[Var "y", Ands '[Var "a", Var "b"]]
---   , Ors '[Var "a", Ands '[Var "x", Var "y"]]
---   , Ors '[Var "b", Ands '[Var "x", Var "y"]]
---   ]
---
--- distribute again
---
--- Ands
---  '[ Ands
---      '[ Ors '[Var "a", Var "x"]
---       , Ors '[Var "b", Var "x"]
---       ]
---   , Ands
---      '[ Ors '[Var "a", Var "y"]
---       , Ors '[Var "b", Var "y"]
---       ]
---   , Ands
---      '[ Ors '[Var "x", Var "a"]
---       , Ors '[Var "y", Var "a"]
---       ]
---   , Ands
---      '[ Ors '[Var "x", Var "b"]
---       , Ors '[Var "y", Var "b"]
---       ]
---   ]
---
--- flatten
---
--- Ands
---  '[ Ors '[Var "a", Var "x"]
---   , Ors '[Var "b", Var "x"]
---   , Ors '[Var "a", Var "y"]
---   , Ors '[Var "b", Var "y"]
---   , Ors '[Var "x", Var "a"]
---   , Ors '[Var "y", Var "a"]
---   , Ors '[Var "x", Var "b"]
---   , Ors '[Var "y", Var "b"]
---   ]
---
--- we now have a bunch of duplicates since x `or` y ~ y `or` x
---
--- Ands
---  '[ Ors '[Var "a", Var "x"]
---   , Ors '[Var "b", Var "x"]
---   , Ors '[Var "a", Var "y"]
---   , Ors '[Var "b", Var "y"]
---   ]
---
--- type Test7 = CNF (Ors '[Ands '[Var "x", Var "y"], Ands '[Var "a", Var "b"]])
+type family Setify (p :: Type) :: Type where
+    Setify (Ands ps) = Ands (Set ps)
+    Setify (Ors ps) = Ors (Set ps)
 
+data Refined (p :: k) a = Refined { unrefine :: a }
+    deriving stock (Show, Eq)
 
+class RefinementPredicate a (p :: Type) where
+    type Label p :: Symbol
+    check :: a -> Bool 
 
--- Is it true that
---  Ors [ Ands [ a, b ], x, Ands [ c, d ], y ]
--- is equivalent to
---  Ors [ Ands [ a, b, c, d ], x, y ]
---
--- If it is, then we should join adjacent ands together (likewise with ors?)
--- to prevent the above duplication.
---
--- No it's not...
+refine :: forall p a. RefinementPredicate a p => a -> Maybe (Refined (Setify (CNF p)) a)
+refine x
+    | check @_ @p x = Just $ Refined x
+    | otherwise = Nothing
 
--- 8. Nested Ors and Ands
-type Test8 = CNF (Ors '[Var "a", Ands '[Var "b", Ors '[Var "c", Var "d"]]])
--- Should be: Ands '[Ors '[Var "a", Var "b"], Ors '[Var "a", Ors '[Var "c", Var "d"]]]
+unsafeRefine :: a -> Refined (Setify (CNF p)) a
+unsafeRefine x = Refined x
 
--- 9. Deeply nested
-type Test9 = CNF (Ors '[Var "a", Ands '[Ors '[Var "b", Var "c"], Var "d"]])
--- Should be: Ands '[Ors '[Var "a", Ors '[Var "b", Var "c"]], Ors '[Var "a", Var "d"]]
+data Positive
 
--- 7, 8 and 9 don't look right because they have nested Ors, need to check what's correct.
+instance (Num a, Ord a) => RefinementPredicate a Positive where
+    type Label Positive = "Positive"
+    check n = n > 0
 
-type Proof1 = Test1 ~ Var "x"
-type Proof2 = Test2 ~ Not (Var "x")
-type Proof3 = Test3 ~ Var "x"
-type Proof4 = Test4 ~ Ors '[Var "x", Var "y"]
-type Proof5 = Test5 ~ Ands '[Var "x", Var "y"]
-type Proof6 = Test6 ~ Ands '[Ors '[Var "x", Var "z"], Ors '[Var "y", Var "z"]]
-type Proof7 = Test7 ~ Ands '[Ors '[Var "a", Var "x"], Ors '[Var "b", Var "x"], Ors '[Var "a", Var "y"], Ors '[Var "b", Var "y"]]
--- type Proof7 = Test7 ~ Ands '[Ors '[Var "x", Ands '[Var "a", Var "b"]], Ors '[Var "y", Ands '[Var "a", Var "b"]]]
-type Proof8 = Test8 ~ Ands '[Ors '[Var "a", Var "b"], Ors '[Var "a", Ors '[Var "c", Var "d"]]]
-type Proof9 = Test9 ~ Ands '[Ors '[Var "a", Ors '[Var "b", Var "c"]], Ors '[Var "a", Var "d"]]
+data LessThan (n :: Nat)
 
-proof1 :: Proof1 => Int
-proof1 = 1
+instance (Num a, Ord a, KnownNat n) => RefinementPredicate a (LessThan n) where
+    type Label (LessThan n) = "LessThan_" <> ShowNat n
+    check x = x < (fromIntegral $ natVal $ Proxy @n)
 
-proof2 :: Proof2 => Int
-proof2 = 2
+type SmallPositive = Ands '[Var Positive, Var (LessThan 10)]
 
-proof3 :: Proof3 => Int
-proof3 = 3
+instance (RefinementPredicate a p) => RefinementPredicate a (Var p) where
+    type Label (Var p) = Label p
+    check x = check @_ @p x
 
-proof4 :: Proof4 => Int
-proof4 = 4
+instance (RefinementPredicate a p) => RefinementPredicate a (Not (Var p)) where
+    type Label (Not (Var p)) = "Not_" <> Label p
+    check x = not $ check @_ @p x
 
-proof5 :: Proof5 => Int
-proof5 = 5
+instance RefinementPredicate a (Ands '[]) where
+    type Label (Ands _) = "Ands"
+    check _ = True
 
-proof6 :: Proof6 => Int
-proof6 = 6
+instance (RefinementPredicate a p, RefinementPredicate a (Ands ps))
+    => RefinementPredicate a (Ands (p ': ps)) where
+    type Label (Ands _) = "Ands"
+    check x = check @_ @p x && check @_ @(Ands ps) x
 
-proof7 :: Proof7 => Int
-proof7 = 7
+instance RefinementPredicate a (Ors '[]) where
+    type Label (Ors _) = "Ors"
+    check _ = False
 
-proof8 :: Proof8 => Int
-proof8 = 8
+instance (RefinementPredicate a p, RefinementPredicate a (Ors ps))
+    => RefinementPredicate a (Ors (p ': ps)) where
+    type Label (Ors _) = "Ors"
+    check x = check @_ @p x || check @_ @(Ors ps) x
 
-proof9 :: Proof9 => Int
-proof9 = 9
+-- if something is P it is automatically P OR Q.
+-- if something is P AND Q it is automatically just P and just Q.
 
-tests :: [Int]
-tests =
-    [ proof1
-    , proof2
-    , proof3
-    , proof4
-    , proof5
-    , proof6
-    -- , proof7
-    -- , proof8
-    -- , proof9
-    ]
+type family Elem (x :: k) (xs :: [k]) :: Bool where
+    Elem _ '[] = 'False
+    Elem x (x ': ys) = 'True
+    Elem x (_ ': ys) = Elem x ys
+
+type family Subset (xs :: [k]) (ys :: [k]) :: Bool where
+    Subset '[] _ = 'True
+    Subset (x ': xs) ys = Elem x ys && Subset xs ys
+
+type family Is (b :: Bool) (e :: ErrorMessage) :: Constraint where
+    Is 'True _ = ()
+    Is 'False e = TypeError e
+
+type family IsElem (x :: k) (xs :: [k]) :: Constraint where
+    IsElem x xs = Is (Elem x xs) (Text "The type " :<>: ShowType x
+        :<>: Text " is not a member of the type-level list " :<>: ShowType xs)
+
+type family IsSubset (xs :: [k]) (ys :: [k]) :: Constraint where
+    IsSubset xs ys = Is (Subset xs ys) (Text "The type-level list " :<>: ShowType xs
+        :<>: Text " is not a subset of the type-level list " :<>: ShowType ys )
+
+-- TODO: Is there a way we can stop nonsense instances of this being created?
+-- Maybe we only export the `weaken` function?
+class (RefinementPredicate a strong, RefinementPredicate a weak) => Weaken a strong weak where
+    weaken :: Refined strong a -> Refined weak a
+    weaken = Refined . unrefine
+
+instance
+    ( RefinementPredicate a p
+    , RefinementPredicate a (Ors ps)
+    , IsElem p ps
+    ) => Weaken a p (Ors ps)
+
+instance
+    ( RefinementPredicate a p
+    , RefinementPredicate a (Ands ps)
+    , IsElem p ps
+    ) => Weaken a (Ands ps) p
+
+instance 
+    ( RefinementPredicate a (Ors ps)
+    , RefinementPredicate a (Ors qs)
+    , IsSubset ps qs
+    ) => Weaken a (Ors ps) (Ors qs)
+
+instance
+    ( RefinementPredicate a (Ands ps)
+    , RefinementPredicate a (Ands qs)
+    , IsSubset ps qs
+    ) => Weaken a (Ands qs) (Ands ps)
