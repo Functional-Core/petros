@@ -73,6 +73,7 @@ library
       Petros.Time.Calendar.Quarter
       Petros.Time.Calendar.Week
       Petros.Time.Calendar.Year
+      Petros.Yoneda
   other-modules:
       Petros.Internal.Basics
   hs-source-dirs:

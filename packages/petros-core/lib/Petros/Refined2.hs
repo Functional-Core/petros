@@ -15,6 +15,7 @@ import Fcf.Data.List (ConcatMap)
 import Data.Proxy (Proxy(..))
 import Fcf.Class.Monoid (type (<>))
 import Data.Type.Bool (type (&&))
+import Data.Maybe (fromJust)
 
 type family Nub (xs :: [k]) :: [k] where
     Nub xs = Nub_ xs '[]
@@ -275,9 +276,6 @@ instance (RefinementPredicate a p, RefinementPredicate a (Ors ps))
     type Label (Ors _) = "Ors"
     check x = check @_ @p x || check @_ @(Ors ps) x
 
--- if something is P it is automatically P OR Q.
--- if something is P AND Q it is automatically just P and just Q.
-
 type family Elem (x :: k) (xs :: [k]) :: Bool where
     Elem _ '[] = 'False
     Elem x (x ': ys) = 'True
@@ -299,32 +297,71 @@ type family IsSubset (xs :: [k]) (ys :: [k]) :: Constraint where
     IsSubset xs ys = Is (Subset xs ys) (Text "The type-level list " :<>: ShowType xs
         :<>: Text " is not a subset of the type-level list " :<>: ShowType ys )
 
--- TODO: Is there a way we can stop nonsense instances of this being created?
--- Maybe we only export the `weaken` function?
-class (RefinementPredicate a strong, RefinementPredicate a weak) => Weaken a strong weak where
+class 
+    ( RefinementPredicate a strong
+    , RefinementPredicate a weak
+    ) => Weaken a strong weak where
     weaken :: Refined strong a -> Refined weak a
     weaken = Refined . unrefine
 
-instance
+instance {-# OVERLAPPABLE #-}
+    ( RefinementPredicate a p
+    ) => Weaken a p p
+
+instance {-# OVERLAPS #-}
     ( RefinementPredicate a p
     , RefinementPredicate a (Ors ps)
     , IsElem p ps
     ) => Weaken a p (Ors ps)
 
-instance
+instance {-# OVERLAPS #-}
     ( RefinementPredicate a p
     , RefinementPredicate a (Ands ps)
     , IsElem p ps
     ) => Weaken a (Ands ps) p
 
-instance 
+instance {-# OVERLAPPING #-}
     ( RefinementPredicate a (Ors ps)
     , RefinementPredicate a (Ors qs)
     , IsSubset ps qs
     ) => Weaken a (Ors ps) (Ors qs)
 
-instance
+instance {-# OVERLAPPING #-}
     ( RefinementPredicate a (Ands ps)
     , RefinementPredicate a (Ands qs)
     , IsSubset ps qs
     ) => Weaken a (Ands qs) (Ands ps)
+
+-- forall x. (a -> x) -> F x === F a
+
+-- forall weak. (strong -> weak) -> F weak === F strong
+
+-- forall weak. (strong -> weak) -> Refined val weak === Refined val strong
+
+-- So (Refined val) forms a type-level functor over the predicate.
+
+
+-- someFunction :: Refined P a -> b
+-- we want this to actually mean
+-- give me a Refined value of type 'a' with a predicate at least as strict as P"
+
+newtype RefinedYoneda a strong = RefinedYoneda
+    -- { runRefinedYoneda :: forall p q. (Weaken a p q) => (Refined p a -> Refined q a) -> Refined q a }
+    { runRefinedYoneda :: forall weak. (Weaken a strong weak) => Refined weak a }
+
+refineYoneda :: forall strong a. (RefinementPredicate a strong) => a -> Maybe (RefinedYoneda a strong)
+refineYoneda x
+    | check @_ @strong x = Just $ RefinedYoneda $ weaken @a @strong (Refined x)
+    | otherwise = Nothing
+
+unrefineYoneda :: forall strong weak a. (Weaken a strong weak) => RefinedYoneda a strong -> a
+unrefineYoneda r = unrefine $ (runRefinedYoneda r) @weak
+
+thing :: RefinedYoneda Int (Ands '[ Var Positive, Var (LessThan 10) ])
+thing = fromJust $ refineYoneda 3
+
+-- showPositive :: RefinedYoneda Int (Var Positive) -> String
+-- showPositive = show . unrefineYoneda
+--
+-- test :: String
+-- test = showPositive thing
