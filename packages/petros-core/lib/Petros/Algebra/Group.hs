@@ -6,6 +6,6 @@ module Petros.Algebra.Group
 
 import Petros.Algebra.Monoid
 
--- Monoid with an inverse element such that a <> invert a == mempty
+-- Monoid with an inverse element such that a <> inverse a == mempty
 class Monoid a => Group a where
-    invert :: a -> a
+    inverse :: a -> a

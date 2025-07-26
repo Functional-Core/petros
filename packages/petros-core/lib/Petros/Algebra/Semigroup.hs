@@ -5,4 +5,3 @@ module Petros.Algebra.Semigroup
     ) where
 
 import Data.Semigroup (Semigroup (..))
-

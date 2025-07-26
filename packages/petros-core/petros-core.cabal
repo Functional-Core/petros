@@ -27,8 +27,15 @@ source-repository head
 library
   exposed-modules:
       Petros
+      Petros.Algebra.CommutativeGroup
+      Petros.Algebra.CommutativeRing
+      Petros.Algebra.DivisionRing
+      Petros.Algebra.Domain
+      Petros.Algebra.EuclideanRing
       Petros.Algebra.Field
+      Petros.Algebra.GcdDomain
       Petros.Algebra.Group
+      Petros.Algebra.IntegralDomain
       Petros.Algebra.Monoid
       Petros.Algebra.Ring
       Petros.Algebra.Semigroup
@@ -45,6 +52,7 @@ library
       Petros.Experimental.TypeLevel
       Petros.Internal
       Petros.Law
+      Petros.NonZero
       Petros.Numeric
       Petros.Numeric.Complex
       Petros.Numeric.Positive

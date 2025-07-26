@@ -1,13 +1,10 @@
 {-# LANGUAGE Safe #-}
 
 module Petros.Algebra.Field
-    ( Field (..)
+    ( Field
     ) where
 
-import Petros.Algebra.Ring
+import Petros.Algebra.EuclideanRing (EuclideanRing)
+import Petros.Algebra.DivisionRing (DivisionRing)
 
--- TODO: (/) :: a -> NonZero a -> a
-
--- TODO: (Ring a, Group (Prod a)) => Field a
-class Ring a => Field a where
-    (/) :: a -> a -> a
+class (DivisionRing a, EuclideanRing a) => Field a where
