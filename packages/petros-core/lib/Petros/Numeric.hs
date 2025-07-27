@@ -78,3 +78,18 @@ isEven = GHC.even
 isOdd :: (Integral a) => a -> Bool
 isOdd = GHC.odd
 {-# INLINE isOdd #-}
+
+-- Ints of various sizes
+-- Integer
+-- Float
+-- Double
+-- Natural
+-- UInts of various sizes
+-- Fixed
+-- Ratio
+-- Mod n (integers modulo n)
+-- Complex
+-- Scientific
+-- dual numbers?
+-- p-adic numbers?
+-- quaternions?
