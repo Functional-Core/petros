@@ -5,5 +5,7 @@ module Petros.Algebra.IntegralDomain
     ) where
 
 import Petros.Algebra.CommutativeRing (CommutativeRing)
+import Petros.Algebra.Domain (Domain)
 
-class (CommutativeRing a) => IntegralDomain a where
+type IntegralDomain a = (CommutativeRing a, Domain a)
+

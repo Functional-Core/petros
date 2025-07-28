@@ -80,16 +80,51 @@ isOdd = GHC.odd
 {-# INLINE isOdd #-}
 
 -- Ints of various sizes
+-- CommutativeRing, can be UnsafeEuclideanRing due to wrapping
+
 -- Integer
+-- EuclideanRing
+--
 -- Float
 -- Double
+-- Issues: finite precision, NaN, +/- Infinity and signed zero.
+-- UnsafeField
+--
 -- Natural
+-- Semiring, not EuclideanRing because no inverse.
+-- But we still want euclidean division, maybe EuclideanSemiring?
+--
 -- UInts of various sizes
+-- Same as Natural but unsafe due to bounding.
+--
 -- Fixed
--- Ratio
+-- CommutativeRing, IntegralDomain
+-- UnsafeField regarding division due to limited precision.
+--
+-- Rational (Ratio Integer)
+-- Field
+--
+-- Integral a => Ratio a
+-- Field only if `IntegralDomain a`.
+--
 -- Mod n (integers modulo n)
+-- CommutativeRing, if n is prime then Field.
+--
 -- Complex
+-- Field
+--
 -- Scientific
+-- IntegralDomain, limited precision.
+--
 -- dual numbers?
+-- CommutativeRing
+--
 -- p-adic numbers?
+-- Qp (p-adic numbers) are a field.
+-- Zp (p-adic integers) are a commutative ring + integral domain
+-- 
 -- quaternions?
+-- DivisionRing and Domain
+--
+-- Multivariate polynomials
+-- GcdDomain

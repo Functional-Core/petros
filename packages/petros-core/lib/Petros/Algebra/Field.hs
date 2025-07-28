@@ -7,4 +7,4 @@ module Petros.Algebra.Field
 import Petros.Algebra.EuclideanRing (EuclideanRing)
 import Petros.Algebra.DivisionRing (DivisionRing)
 
-class (DivisionRing a, EuclideanRing a) => Field a where
+type Field a = (DivisionRing a, EuclideanRing a)

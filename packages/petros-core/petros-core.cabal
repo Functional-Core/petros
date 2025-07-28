@@ -32,8 +32,10 @@ library
       Petros.Algebra.DivisionRing
       Petros.Algebra.Domain
       Petros.Algebra.EuclideanRing
+      Petros.Algebra.EuclideanSemiring
       Petros.Algebra.Field
       Petros.Algebra.GcdDomain
+      Petros.Algebra.GcdSemiring
       Petros.Algebra.Group
       Petros.Algebra.IntegralDomain
       Petros.Algebra.Monoid

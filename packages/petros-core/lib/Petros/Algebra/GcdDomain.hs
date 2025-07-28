@@ -1,10 +1,10 @@
 {-# LANGUAGE Safe #-}
 
 module Petros.Algebra.GcdDomain
-    ( GcdDomain (..)
+    ( GcdDomain
     ) where
 
 import Petros.Algebra.IntegralDomain (IntegralDomain)
+import Petros.Algebra.GcdSemiring (GcdSemiring)
 
-class (IntegralDomain a) => GcdDomain a where
-    gcd :: a -> a -> a
+type GcdDomain a = (IntegralDomain a, GcdSemiring a)
