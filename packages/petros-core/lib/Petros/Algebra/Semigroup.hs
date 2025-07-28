@@ -2,6 +2,8 @@
 
 module Petros.Algebra.Semigroup
     ( Semigroup (..)
+    , Sum (..)
+    , Product (..)
     ) where
 
-import Data.Semigroup (Semigroup (..))
+import Data.Semigroup (Semigroup (..), Sum (..), Product (..)) 

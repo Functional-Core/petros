@@ -6,8 +6,8 @@ module Petros.Algebra.Ring
 
 import Petros.Algebra.Semiring
 import Petros.Algebra.Group
-import Petros.Algebra.Monoid
 import Data.Function ((.))
+import Petros.Algebra.Semigroup (Sum (..))
 
 -- Semiring with additive negation
 class (Semiring a, Group (Sum a)) => Ring a where
