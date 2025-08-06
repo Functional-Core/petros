@@ -19,7 +19,6 @@
       "deepseq"
       "unliftio"
       "time"
-      "semirings"
       "refined"
       "first-class-families"
     ];

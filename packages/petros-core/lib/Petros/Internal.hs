@@ -1,5 +1,5 @@
 {-# LANGUAGE DerivingStrategies #-}
-{-# LANGUAGE Safe #-}
+{-# LANGUAGE Trustworthy #-}
 
 module Petros.Internal
     ( FromPrelude (..)
@@ -8,15 +8,15 @@ module Petros.Internal
     ) where
 
 import GHC.Generics
-import Prelude
+import Data.Coerce ( coerce )
 
 newtype FromPrelude a = FromPrelude a
     deriving stock (Generic)
 
 liftPrelude :: (a -> b) -> FromPrelude a -> b
-liftPrelude op (FromPrelude x) = op x
+liftPrelude op x = op (coerce x)
 {-# INLINE liftPrelude #-}
 
 liftPrelude2 :: (a -> a -> b) -> FromPrelude a -> FromPrelude a -> b
-liftPrelude2 op (FromPrelude x) (FromPrelude y) = x `op` y
+liftPrelude2 op x y = coerce x `op` coerce y
 {-# INLINE liftPrelude2 #-}

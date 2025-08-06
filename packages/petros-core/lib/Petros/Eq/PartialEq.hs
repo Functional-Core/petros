@@ -4,6 +4,8 @@
 {-# LANGUAGE DerivingStrategies #-}
 {-# LANGUAGE DerivingVia #-}
 {-# LANGUAGE Trustworthy #-}
+{-# LANGUAGE UndecidableInstances #-}
+{-# OPTIONS_GHC -Wno-orphans #-}
 
 module Petros.Eq.PartialEq
     ( PartialEq (..)
@@ -22,6 +24,8 @@ import Data.Int
 import Data.Word
 import GHC.Natural
 import Data.Void
+import Data.Ratio (Ratio)
+import Data.Fixed (Fixed)
 
 class PartialEq a where
     (~=) :: a -> a -> Bool
@@ -51,6 +55,10 @@ partialEqWith f x y = f x ~= f y
 
 partialEqOn :: forall f r a. (HasField f r a, PartialEq a) => r -> r -> Bool
 partialEqOn = partialEqWith (getField @f)
+
+-- TODO: Is this a good idea? Probably not...
+instance {-# OVERLAPPABLE #-} PartialEq a => Prelude.Eq a where
+    (==) = (~=)
 
 --------------------------------------------------------------------------
 
@@ -112,6 +120,9 @@ deriving via (FromPrelude Word8) instance PartialEq Word8
 deriving via (FromPrelude Word16) instance PartialEq Word16
 deriving via (FromPrelude Word32) instance PartialEq Word32
 deriving via (FromPrelude Word64) instance PartialEq Word64
+
+deriving via (FromPrelude (Ratio a)) instance PartialEq a => PartialEq (Ratio a)
+deriving via (FromPrelude (Fixed a)) instance PartialEq (Fixed a)
 
 instance PartialEq Float where
     x ~= y

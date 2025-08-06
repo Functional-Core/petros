@@ -38,6 +38,7 @@ library
       Petros.Algebra.GcdSemiring
       Petros.Algebra.Group
       Petros.Algebra.IntegralDomain
+      Petros.Algebra.Internal
       Petros.Algebra.Monoid
       Petros.Algebra.Ring
       Petros.Algebra.Semigroup
@@ -118,7 +119,6 @@ library
     , first-class-families
     , hashable
     , refined
-    , semirings
     , text
     , time
     , unliftio
@@ -131,6 +131,7 @@ test-suite petros-core-test
   other-modules:
       Petros.Eq.EqSpec
       Petros.Eq.PartialEqSpec
+      Petros.Numeric.SemigroupSpec
       Spec
       Paths_petros_core
   hs-source-dirs:
