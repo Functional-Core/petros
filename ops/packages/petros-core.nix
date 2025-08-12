@@ -11,6 +11,7 @@
     enable = true;
     dependencies = [
       "base"
+      "extra"
       "bytestring"
       "text"
       "containers"

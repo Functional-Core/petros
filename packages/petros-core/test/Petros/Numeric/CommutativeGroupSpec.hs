@@ -2,14 +2,12 @@
 {-# LANGUAGE BlockArguments #-}
 {-# OPTIONS_GHC -Wno-orphans #-}
 
-module Petros.Numeric.SemigroupSpec (spec) where
+module Petros.Numeric.CommutativeGroupSpec (spec) where
 
 import Data.GenValidity
-import Petros.Eq.Eq
-import Petros.Eq.PartialEq
 import Test.Hspec
 import Test.Hspec.QuickCheck (prop)
-import Test.QuickCheck (Property)
+import Test.QuickCheck (Property, Arbitrary)
 import Test.Validity.Property
 import Prelude hiding (Eq (..))
 import Prelude qualified
@@ -24,6 +22,8 @@ import GHC.Real
     )
 import Data.Fixed (Fixed (..), Centi)
 import Petros.Test.Util ()
+import Petros.Algebra.Group (Group (..))
+import Petros.Algebra.CommutativeGroup (CommutativeGroup)
 
 spec :: Spec
 spec = describe "Semigroup" do
@@ -71,14 +71,14 @@ spec = describe "Semigroup" do
         -- justBase @(Product Centi) "Centi"
         -- justBase @(Product Rational) "Rational"
 
-justBase :: forall a. (Prelude.Eq a, Semigroup a, Show a, GenValid a)
-    => String -> Spec
+justBase :: forall a. ( Prelude.Eq a, CommutativeGroup a, Show a, GenValid a)
+    =>String -> Spec
 justBase label = baseSpec @a label (pure ())
 
-baseSpec :: forall a. (Prelude.Eq a, Semigroup a, Show a, GenValid a)
-    => String -> Spec -> Spec
+baseSpec :: forall a. ( Prelude.Eq a, CommutativeGroup a, Show a, GenValid a)
+    =>String -> Spec -> Spec
 baseSpec label extras = do
     describe label do
         extras
         describe "(<>)" do
-            prop "associative" (associative @a (<>))
+            prop "commutative" (commutative @a (<>))

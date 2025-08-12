@@ -1,4 +1,5 @@
 {-# LANGUAGE Trustworthy #-}
+{-# LANGUAGE MagicHash #-}
 {-# LANGUAGE RebindableSyntax #-}
 {-# LANGUAGE DerivingVia #-}
 {-# LANGUAGE UndecidableInstances #-}
@@ -9,6 +10,8 @@ module Petros.Algebra.Internal
     , Product (..)
     , Monoid (..)
     , Group (..)
+    , negate
+    , recip
     , CommutativeGroup
     , Semiring (..)
     , Ring (..)
@@ -21,12 +24,16 @@ module Petros.Algebra.Internal
     , EuclideanSemiring (..)
     , DivisionRing (..)
     , Field
-    , (%)
+    , UnsafeSemiring (..)
+    , UnsafeRing (..)
+    , UnsafeEuclidean (..)
+    , UnsafeField (..)
     ) where
 
 import Data.Semigroup (Semigroup (..))
 import Prelude (Show, Integer, (.)) 
 import Prelude qualified
+import Data.Either (fromRight)
     ( Real (..)
     , RealFrac (..)
     , Fractional (..)
@@ -41,14 +48,22 @@ import GHC.Float (Double, Float)
 import GHC.Natural (Natural)
 import GHC.Real
     ( Rational
-    , Ratio (..), ratioZeroDenominatorError
+    , Ratio (..)
     )
 import Data.Fixed (Fixed (..), HasResolution)
 import Data.Monoid (Monoid (..))
 import Data.Coerce (coerce)
 import Petros.Eq
 import Petros.Internal
-import Data.Time.Calendar.MonthDay (monthAndDayToDayOfYear)
+import Data.Maybe (Maybe (..))
+import GHC.Generics (Generic)
+import Data.Either (Either (..))
+import Data.Either.Extra (eitherToMaybe)
+import GHC.Base (error, ($), Functor (..), otherwise)
+import Data.String (IsString(..))
+import Petros.Display (Display (..), displayStr)
+import GHC.Stack (HasCallStack, withFrozenCallStack)
+import Data.Tuple (fst, snd)
 
 -----------------------------------------
 -- Is Integer
@@ -245,115 +260,87 @@ instance Semigroup (Product Double) where
 
 instance Monoid (Sum Int) where
     mempty = Sum 0
-    {-# INLINE mempty #-}
 
 instance Monoid (Sum Int8) where
     mempty = Sum 0
-    {-# INLINE mempty #-}
 
 instance Monoid (Sum Int16) where
     mempty = Sum 0
-    {-# INLINE mempty #-}
 
 instance Monoid (Sum Int32) where
     mempty = Sum 0
-    {-# INLINE mempty #-}
 
 instance Monoid (Sum Int64) where
     mempty = Sum 0
-    {-# INLINE mempty #-}
 
 instance Monoid (Sum Word) where
     mempty = Sum 0
-    {-# INLINE mempty #-}
 
 instance Monoid (Sum Word8) where
     mempty = Sum 0
-    {-# INLINE mempty #-}
 
 instance Monoid (Sum Word16) where
     mempty = Sum 0
-    {-# INLINE mempty #-}
 
 instance Monoid (Sum Word32) where
     mempty = Sum 0
-    {-# INLINE mempty #-}
 
 instance Monoid (Sum Word64) where
     mempty = Sum 0
-    {-# INLINE mempty #-}
 
 instance Monoid (Sum Integer) where
     mempty = Sum 0
-    {-# INLINE mempty #-}
 
 instance Monoid (Sum Natural) where
     mempty = Sum 0
-    {-# INLINE mempty #-}
 
 instance Monoid (Sum Float) where
     mempty = Sum 0
-    {-# INLINE mempty #-}
 
 instance Monoid (Sum Double) where
     mempty = Sum 0
-    {-# INLINE mempty #-}
 
 instance Monoid (Product Int) where
     mempty = Product 1
-    {-# INLINE mempty #-}
 
 instance Monoid (Product Int8) where
     mempty = Product 1
-    {-# INLINE mempty #-}
 
 instance Monoid (Product Int16) where
     mempty = Product 1
-    {-# INLINE mempty #-}
 
 instance Monoid (Product Int32) where
     mempty = Product 1
-    {-# INLINE mempty #-}
 
 instance Monoid (Product Int64) where
     mempty = Product 1
-    {-# INLINE mempty #-}
 
 instance Monoid (Product Word) where
     mempty = Product 1
-    {-# INLINE mempty #-}
 
 instance Monoid (Product Word8) where
     mempty = Product 1
-    {-# INLINE mempty #-}
 
 instance Monoid (Product Word16) where
     mempty = Product 1
-    {-# INLINE mempty #-}
 
 instance Monoid (Product Word32) where
     mempty = Product 1
-    {-# INLINE mempty #-}
 
 instance Monoid (Product Word64) where
     mempty = Product 1
-    {-# INLINE mempty #-}
 
 instance Monoid (Product Integer) where
     mempty = Product 1
-    {-# INLINE mempty #-}
 
 instance Monoid (Product Natural) where
     mempty = Product 1
-    {-# INLINE mempty #-}
 
 instance Monoid (Product Float) where
     mempty = Product 1
-    {-# INLINE mempty #-}
 
 instance Monoid (Product Double) where
     mempty = Product 1
-    {-# INLINE mempty #-}
 
 -----------------------------------------
 -- Group
@@ -362,6 +349,15 @@ instance Monoid (Product Double) where
 -- Monoid with an inverse element such that a <> inverse a == mempty
 class Monoid a => Group a where
     inverse :: a -> a
+
+negate :: forall a. (Group (Sum a)) => a -> a
+negate = coerce (inverse :: Sum a -> Sum a)
+{-# INLINE negate #-}
+{-# SPECIALIZE negate :: Integer -> Integer #-}
+
+recip :: forall a. (Group (Product a)) => a -> a
+recip = coerce (inverse :: Product a -> Product a)
+{-# INLINE recip #-}
 
 instance Group (Sum Int) where
     inverse = coerce (Prelude.negate :: Int -> Int)
@@ -372,28 +368,12 @@ instance Group (Sum Integer) where
     {-# INLINE inverse #-}
 
 instance Group (Sum Double) where
-    inverse = coerce ((Prelude.*) (-1) :: Double -> Double)
+    inverse = coerce (Prelude.negate :: Double -> Double)
     {-# INLINE inverse #-}
 
 instance Group (Product Double) where
-    inverse = coerce ((Prelude.recip) :: Double -> Double)
+    inverse = coerce (Prelude.recip :: Double -> Double)
     {-# INLINE inverse #-}
-
-class AdditiveGroup a where
-    negate :: a -> a
-
-class MultiplicativeGroup a where
-    recip :: a -> a
-
-instance Group (Sum a) => AdditiveGroup a where
-    -- TODO: Add specialisations
-    negate = coerce (inverse :: Sum a -> Sum a)
-    {-# INLINE negate #-}
-
-instance Group (Product a) => MultiplicativeGroup a where
-    -- TODO: Add specialisations
-    recip = coerce (inverse :: Product a -> Product a)
-    {-# INLINE recip #-}
 
 -----------------------------------------
 -- Commutative (Abelian) Group
@@ -445,6 +425,7 @@ class (Semiring a, CommutativeGroup (Sum a)) => Ring a where
     (-) :: a -> a -> a
     x - y = x + (negate y)
 
+instance Ring Int
 instance Ring Integer
 instance Ring Double
 
@@ -484,16 +465,23 @@ instance GcdSemiring Natural where
 class (GcdSemiring a) => EuclideanSemiring a where
     quot :: a -> NonZero a -> a
     quot x y = q where (q, _) = quotRem x y
+    {-# INLINE quot #-}
 
     rem :: a -> NonZero a -> a
     rem x y = r where (_, r) = quotRem x y
+    {-# INLINE rem #-}
+
+    div :: a -> NonZero a -> a
+    div x y = d where (d, _) = divMod x y
+    {-# INLINE div #-}
+
+    mod :: a -> NonZero a -> a
+    mod x y = m where (_, m) = divMod x y
+    {-# INLINE mod #-}
 
     quotRem :: a -> NonZero a -> (a, a)
+    divMod :: a -> NonZero a -> (a, a)
     degree :: a -> Natural
-
-(%) :: forall a. EuclideanSemiring a => a -> a -> a
-x % y = rem x (coerce y)
-{-# INLINE (%) #-}
 
 -- | 'reduce' is a subsidiary function used only in this module.
 -- It normalises a ratio by dividing both numerator and denominator by
@@ -505,9 +493,8 @@ x % y = rem x (coerce y)
 --                            where d = NonZero (gcd x y)
 
 instance EuclideanSemiring Int where 
-    quot x y = Prelude.quot x (coerce y)
-    rem x y = Prelude.rem x (coerce y)
     quotRem x y = Prelude.quotRem x (coerce y)
+    divMod x y = Prelude.divMod x (coerce y)
     degree = Prelude.fromIntegral . Prelude.abs
 
 -----------------------------------------
@@ -557,15 +544,213 @@ type EuclideanRing a = (GcdDomain a, EuclideanSemiring a)
 
 type Field a = (DivisionRing a, EuclideanRing a)
 
+-----------------------------------------
+-- Unsafe
+-----------------------------------------
 
+data ArithmeticError
+    = Overflow
+    | Underflow
+    | DivideByZero
+    deriving stock (Show, Generic)
+    deriving anyclass (PartialEq, Eq)
 
+instance Display ArithmeticError where
+    display Overflow = "arithmetic overflow error"
+    display Underflow = "arithmetic underflow error"
+    display DivideByZero = "divide by zero error"
 
+type Checked a = Either ArithmeticError a
 
+fromChecked :: HasCallStack => Checked a -> a
+fromChecked = \case
+    Right a -> a
+    Left err -> withFrozenCallStack
+        $ error (displayStr err)
 
+class UnsafeSemiring a where
+    checkedAdd :: a -> a -> Checked a
+    checkedMul :: a -> a -> Checked a
 
+    (+?) :: a -> a -> Maybe a 
+    x +? y = eitherToMaybe (checkedAdd x y)
+    
+    -- | A default implementation which unwraps 'checkedAdd'
+    -- is provided but it is expected that instances overwrite
+    -- this with a raw-unchecked variant for efficiency.
+    (+!) :: HasCallStack => a -> a -> a
+    x +! y = fromChecked (checkedAdd x y)
 
+    (*?) :: a -> a -> Maybe a 
+    x *? y = eitherToMaybe (checkedMul x y)
 
+    -- | A default implementation which unwraps 'checkedMul'
+    -- is provided but it is expected that instances overwrite
+    -- this with a raw-unchecked variant for efficiency.
+    (*!) :: HasCallStack => a -> a -> a
+    x *! y = fromChecked (checkedMul x y)
 
+instance Semiring a => UnsafeSemiring a where
+    checkedAdd x y = Right (x + y)
+    {-# INLINE checkedAdd #-}
 
+    checkedMul x y = Right (x * y)
+    {-# INLINE checkedMul #-}
 
+    x +? y = Just (x + y) 
+    {-# INLINE (+?) #-}
+
+    x *? y = Just (x * y)
+    {-# INLINE (*?) #-}
+
+    (+!) = (+)
+    {-# INLINE (+!) #-}
+
+    (*!) = (*)
+    {-# INLINE (*!) #-}
+
+class UnsafeRing a where
+    checkedSub :: a -> a -> Checked a
+
+    (-?) :: a -> a -> Maybe a 
+    x -? y = eitherToMaybe (checkedSub x y)
+
+    -- | A default implementation which unwraps 'checkedSub'
+    -- is provided but it is expected that instances overwrite
+    -- this with a raw-unchecked variant for efficiency.
+    (-!) :: HasCallStack => a -> a -> a
+    x -! y = fromChecked (checkedSub x y)
+
+instance Ring a => UnsafeRing a where
+    checkedSub x y = Right (x - y)
+    {-# INLINE checkedSub #-}
+
+    x -? y = Just (x - y)
+    {-# INLINE (-?) #-}
+
+    x -! y = x - y
+    {-# INLINE (-!) #-}
+
+class UnsafeEuclidean a where
+    checkedDivMod :: a -> a -> Checked (a, a)
+
+    checkedIntDiv :: a -> a -> Checked a
+    checkedIntDiv x y = fmap fst (checkedDivMod x y)
+
+    checkedMod :: a -> a -> Checked a
+    checkedMod x y = fmap snd (checkedDivMod x y)
+
+    maybeDivMod :: a -> a -> Maybe (a, a)
+    maybeDivMod x y = eitherToMaybe (checkedDivMod x y)
+
+    maybeIntDiv :: a -> a -> Maybe a
+    maybeIntDiv x y = fmap fst (maybeDivMod x y)
+
+    maybeMod :: a -> a -> Maybe a
+    maybeMod x y = fmap snd (maybeDivMod x y)
+    
+    -- | A default implementation which unwraps 'checkedDivMod'
+    -- is provided but it is expected that instances overwrite
+    -- this with a raw-unchecked variant for efficiency.
+    unsafeDivMod :: HasCallStack => a -> a -> (a, a)
+    unsafeDivMod x y = fromChecked (checkedDivMod x y)
+
+    -- | A default implementation which calls 'unsafeDivMod'
+    -- is provided.
+    unsafeIntDiv :: HasCallStack => a -> a -> a
+    unsafeIntDiv x y = fst (unsafeDivMod x y)
+
+    -- | A default implementation which calls 'unsafeDivMod'
+    -- is provided.
+    unsafeMod :: HasCallStack => a -> a -> a
+    unsafeMod x y = snd (unsafeDivMod x y)
+
+    -------------------------------------------------
+
+    checkedQuotRem :: a -> a -> Checked (a, a)
+
+    checkedQuot :: a -> a -> Checked a
+    checkedQuot x y = fmap fst (checkedQuotRem x y)
+
+    checkedRem :: a -> a -> Checked a
+    checkedRem x y = fmap snd (checkedQuotRem x y)
+
+    maybeQuotRem :: a -> a -> Maybe (a, a)
+    maybeQuotRem x y = eitherToMaybe (checkedQuotRem x y)
+
+    maybeQuot :: a -> a -> Maybe a
+    maybeQuot x y = fmap fst (maybeQuotRem x y)
+
+    maybeRem :: a -> a -> Maybe a
+    maybeRem x y = fmap snd (maybeQuotRem x y)
+
+    -- | A default implementation which unwraps 'checkedQuotRem'
+    -- is provided but it is expected that instances overwrite
+    -- this with a raw-unchecked variant for efficiency.
+    unsafeQuotRem :: HasCallStack => a -> a -> (a, a)
+    unsafeQuotRem x y = fromChecked (checkedQuotRem x y)
+
+    -- | A default implementation which calls 'unsafeQuotRem'
+    -- is provided.
+    unsafeQuot :: HasCallStack => a -> a -> a
+    unsafeQuot x y = fst (unsafeQuotRem x y)
+
+    -- | A default implementation which calls 'unsafeQuotRem'
+    -- is provided.
+    unsafeRem :: HasCallStack => a -> a -> a
+    unsafeRem x y = snd (unsafeQuotRem x y)
+
+    -------------------------------------------------
+    
+    checkedGcd :: a -> a -> Checked a
+    
+    maybeGcd :: a -> a -> Maybe a
+    maybeGcd x y = eitherToMaybe (checkedGcd x y)
+
+    -- | A default implementation which unwraps 'checkedDiv'
+    -- is provided but it is expected that instances overwrite
+    -- this with a raw-unchecked variant for efficiency.
+    unsafeGcd :: HasCallStack => a -> a -> a
+    unsafeGcd x y = fromChecked (checkedGcd x y)
+
+tryNonZero :: (Eq a, Semiring a) => a -> (NonZero a -> b) -> Checked b
+tryNonZero x f
+    | x == zero = Left DivideByZero
+    | otherwise = Right (f (NonZero x))
+
+instance (Eq a, EuclideanSemiring a) => UnsafeEuclidean a where
+    checkedDivMod x y = tryNonZero y (divMod x)
+    checkedIntDiv x y = tryNonZero y (div x)
+    checkedMod x y = tryNonZero y (mod x)
+
+    unsafeDivMod x y = x `divMod` (NonZero y)
+
+    checkedQuotRem x y = tryNonZero y (quotRem x)
+    checkedQuot x y = tryNonZero y (quot x)
+    checkedRem x y = tryNonZero y (rem x)
+
+    unsafeQuotRem x y = x `quotRem` (NonZero y)
+
+    checkedGcd x y = Right (gcd x y)
+    {-# INLINE checkedGcd #-}
+    maybeGcd x y = Just (gcd x y)
+    {-# INLINE maybeGcd #-}
+    unsafeGcd x y = gcd x y
+    {-# INLINE unsafeGcd #-}
+
+class UnsafeField a where
+    checkedDiv :: a -> a -> Checked a
+
+    maybeDiv :: a -> a -> Maybe a
+    maybeDiv x y = eitherToMaybe (checkedDiv x y)
+
+    -- | A default implementation which unwraps 'checkedDiv'
+    -- is provided but it is expected that instances overwrite
+    -- this with a raw-unchecked variant for efficiency.
+    unsafeDiv :: HasCallStack => a -> a -> a
+    unsafeDiv x y = fromChecked (checkedDiv x y)
+
+instance (Field a, Eq a) => UnsafeField a where
+    checkedDiv x y = tryNonZero y (x /)
+    unsafeDiv x y = x / NonZero y
 

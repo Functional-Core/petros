@@ -2,7 +2,7 @@
 {-# LANGUAGE BlockArguments #-}
 {-# OPTIONS_GHC -Wno-orphans #-}
 
-module Petros.Numeric.SemigroupSpec (spec) where
+module Petros.Numeric.MonoidSpec (spec) where
 
 import Data.GenValidity
 import Petros.Eq.Eq
@@ -26,7 +26,7 @@ import Data.Fixed (Fixed (..), Centi)
 import Petros.Test.Util ()
 
 spec :: Spec
-spec = describe "Semigroup" do
+spec = describe "Monoid" do
     describe "Sum" do
         justBase @(Sum Int) "Int"
         justBase @(Sum Int8) "Int8"
@@ -71,14 +71,15 @@ spec = describe "Semigroup" do
         -- justBase @(Product Centi) "Centi"
         -- justBase @(Product Rational) "Rational"
 
-justBase :: forall a. (Prelude.Eq a, Semigroup a, Show a, GenValid a)
+justBase :: forall a. (Prelude.Eq a, Monoid a, Show a, GenValid a)
     => String -> Spec
 justBase label = baseSpec @a label (pure ())
 
-baseSpec :: forall a. (Prelude.Eq a, Semigroup a, Show a, GenValid a)
+baseSpec :: forall a. (Prelude.Eq a, Monoid a, Show a, GenValid a)
     => String -> Spec -> Spec
 baseSpec label extras = do
     describe label do
         extras
-        describe "(<>)" do
-            prop "associative" (associative @a (<>))
+        describe "mempty" do
+            prop "left identity for (<>)" (leftIdentity @a (<>) mempty)
+            prop "right identity for (<>)" (rightIdentity @a (<>) mempty)

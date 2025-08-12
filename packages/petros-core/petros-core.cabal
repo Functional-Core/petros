@@ -31,7 +31,6 @@ library
       Petros.Algebra.CommutativeRing
       Petros.Algebra.DivisionRing
       Petros.Algebra.Domain
-      Petros.Algebra.EuclideanRing
       Petros.Algebra.EuclideanSemiring
       Petros.Algebra.Field
       Petros.Algebra.GcdDomain
@@ -47,6 +46,7 @@ library
       Petros.Binary.Builder
       Petros.Cnf
       Petros.CnfTypes
+      Petros.Display
       Petros.Eq
       Petros.Eq.Eq
       Petros.Eq.PartialEq
@@ -84,6 +84,7 @@ library
       Petros.Time.Calendar.Quarter
       Petros.Time.Calendar.Week
       Petros.Time.Calendar.Year
+      Petros.Util
       Petros.Yoneda
   other-modules:
       Petros.Internal.Basics
@@ -116,6 +117,7 @@ library
     , bytestring
     , containers
     , deepseq
+    , extra
     , first-class-families
     , hashable
     , refined
@@ -131,7 +133,19 @@ test-suite petros-core-test
   other-modules:
       Petros.Eq.EqSpec
       Petros.Eq.PartialEqSpec
+      Petros.Numeric.CommutativeGroupSpec
+      Petros.Numeric.CommutativeRingSpec
+      Petros.Numeric.DivisionRingSpec
+      Petros.Numeric.DomainSpec
+      Petros.Numeric.EuclideanDomainSpec
+      Petros.Numeric.EuclidieanSemiringSpec
+      Petros.Numeric.GcdSemiringSpec
+      Petros.Numeric.GroupSpec
+      Petros.Numeric.MonoidSpec
+      Petros.Numeric.RingSpec
       Petros.Numeric.SemigroupSpec
+      Petros.Numeric.SemiringSpec
+      Petros.Test.Util
       Spec
       Paths_petros_core
   hs-source-dirs:
