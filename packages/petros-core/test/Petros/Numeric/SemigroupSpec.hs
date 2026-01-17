@@ -43,8 +43,6 @@ spec = describe "Semigroup" do
         justBase @(Sum Natural) "Natural"
         justBase @(Sum Integer) "Integer"
 
-        justBase @(Sum Float) "Float"
-        justBase @(Sum Double) "Double"
 
         -- justBase @(Sum Centi) "Centi"
         -- justBase @(Sum Rational) "Rational"
@@ -65,8 +63,6 @@ spec = describe "Semigroup" do
         justBase @(Product Natural) "Natural"
         justBase @(Product Integer) "Integer"
 
-        justBase @(Product Float) "Float"
-        justBase @(Product Double) "Double"
 
         -- justBase @(Product Centi) "Centi"
         -- justBase @(Product Rational) "Rational"

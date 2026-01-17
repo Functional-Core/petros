@@ -25,6 +25,7 @@
     ];
     component.other-modules = [
       "Petros.Internal.Basics"
+      "Petros.Algebra.Internal"
     ];
     component.ghc-options = [
       "-Wmissing-safe-haskell-mode"

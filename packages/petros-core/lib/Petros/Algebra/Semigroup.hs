@@ -6,7 +6,7 @@ module Petros.Algebra.Semigroup
     , Product (..)
     ) where
 
-import Petros.Algebra.Internal
+import Petros.Algebra.Internal (Semigroup (..), Sum (..), Product (..))
 
 -- TODO: Do we bother re-exporting All/Any for Bool?
 -- and even the others like First/Last?

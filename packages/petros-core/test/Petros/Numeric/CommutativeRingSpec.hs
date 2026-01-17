@@ -24,28 +24,13 @@ import GHC.Real
     )
 import Data.Fixed (Fixed (..), Centi)
 import Petros.Test.Util ()
-import Petros.Algebra.CommutativeRing (CommutativeRing)
+import Petros.Algebra.Ring (CommutativeRing)
 import Petros.Algebra.Semiring (Semiring(..))
 
 spec :: Spec
 spec = describe "Commutative Ring" do
-    justBase @Int "Int"
-    justBase @Int8 "Int8"
-    justBase @Int16 "Int16"
-    justBase @Int32 "Int32"
-    justBase @Int64 "Int64"
-
-    justBase @Word "Word"
-    justBase @Word8 "Word8"
-    justBase @Word16 "Word16"
-    justBase @Word32 "Word32"
-    justBase @Word64 "Word64"
-
-    justBase @Natural "Natural"
     justBase @Integer "Integer"
 
-    justBase @Float "Float"
-    justBase @Double "Double"
 
     -- justBase @Centi "Centi"
     -- justBase @Rational "Rational"

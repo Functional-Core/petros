@@ -2,18 +2,8 @@
 
 module Petros.Algebra.Ring
     ( Ring (..) 
+    , CommutativeRing
+    , DivisionRing (..)
     ) where
 
-import Petros.Algebra.Semiring
-import Petros.Algebra.Group
-import Data.Function ((.))
-import Petros.Algebra.Semigroup (Sum (..))
-
--- Semiring with additive negation
-class (Semiring a, Group (Sum a)) => Ring a where
-    negate :: a -> a
-    negate = getSum . inverse . Sum
-    {-# INLINE negate #-}
-
-    (-) :: a -> a -> a
-    x - y = x + (negate y)
+import Petros.Algebra.Internal (Ring (..), CommutativeRing, DivisionRing (..))

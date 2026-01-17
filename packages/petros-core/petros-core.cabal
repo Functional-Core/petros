@@ -27,21 +27,14 @@ source-repository head
 library
   exposed-modules:
       Petros
-      Petros.Algebra.CommutativeGroup
-      Petros.Algebra.CommutativeRing
-      Petros.Algebra.DivisionRing
       Petros.Algebra.Domain
-      Petros.Algebra.EuclideanSemiring
       Petros.Algebra.Field
-      Petros.Algebra.GcdDomain
-      Petros.Algebra.GcdSemiring
       Petros.Algebra.Group
-      Petros.Algebra.IntegralDomain
-      Petros.Algebra.Internal
       Petros.Algebra.Monoid
       Petros.Algebra.Ring
       Petros.Algebra.Semigroup
       Petros.Algebra.Semiring
+      Petros.Algebra.Unsafe
       Petros.Binary
       Petros.Binary.Builder
       Petros.Cnf
@@ -58,6 +51,8 @@ library
       Petros.NonZero
       Petros.Numeric
       Petros.Numeric.Complex
+      Petros.Numeric.FromInteger
+      Petros.Numeric.FromRational
       Petros.Numeric.Positive
       Petros.Numeric.Primitives
       Petros.Ord
@@ -88,6 +83,7 @@ library
       Petros.Yoneda
   other-modules:
       Petros.Internal.Basics
+      Petros.Algebra.Internal
   hs-source-dirs:
       lib
   default-extensions:
@@ -138,7 +134,7 @@ test-suite petros-core-test
       Petros.Numeric.DivisionRingSpec
       Petros.Numeric.DomainSpec
       Petros.Numeric.EuclideanDomainSpec
-      Petros.Numeric.EuclidieanSemiringSpec
+      Petros.Numeric.EuclideanSemiringSpec
       Petros.Numeric.GcdSemiringSpec
       Petros.Numeric.GroupSpec
       Petros.Numeric.MonoidSpec

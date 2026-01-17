@@ -19,7 +19,7 @@ module Petros.Algebra.Internal
     , Domain
     , IntegralDomain
     , GcdDomain
-    , EuclideanRing
+    , EuclideanDomain
     , GcdSemiring (..)
     , EuclideanSemiring (..)
     , DivisionRing (..)
@@ -28,20 +28,13 @@ module Petros.Algebra.Internal
     , UnsafeRing (..)
     , UnsafeEuclidean (..)
     , UnsafeField (..)
+    , FromInteger (..)
+    , FromRational (..)
     ) where
 
 import Data.Semigroup (Semigroup (..))
 import Prelude (Show, Integer, (.)) 
 import Prelude qualified
-import Data.Either (fromRight)
-    ( Real (..)
-    , RealFrac (..)
-    , Fractional (..)
-    , Num (..)
-    , Integral (..)
-    , gcd
-    , fromIntegral
-    )
 import Data.Int (Int, Int16, Int32, Int64, Int8)
 import Data.Word (Word, Word16, Word32, Word64, Word8)
 import GHC.Float (Double, Float)
@@ -50,6 +43,7 @@ import GHC.Real
     ( Rational
     , Ratio (..)
     )
+import GHC.Real qualified (ratioZeroDenominatorError)
 import Data.Fixed (Fixed (..), HasResolution)
 import Data.Monoid (Monoid (..))
 import Data.Coerce (coerce)
@@ -65,8 +59,12 @@ import Petros.Display (Display (..), displayStr)
 import GHC.Stack (HasCallStack, withFrozenCallStack)
 import Data.Tuple (fst, snd)
 
+-- TODO: SPECIALISE instances
+-- TODO: Include ordered variants of semirings etc. with appropriate laws e.g. x >= z && y >= z => x + y >= z
+-- Convenience constraint synonyms e.g. Integral (combining Eq or Ord with FromInteger)
+
 -----------------------------------------
--- Is Integer
+-- From Integer
 -----------------------------------------
 
 class FromInteger a where
@@ -100,7 +98,7 @@ instance (HasResolution a) => FromInteger (Fixed a) where
     fromInteger = Prelude.fromInteger
 
 -----------------------------------------
--- Is Rational
+-- From Rational
 -----------------------------------------
 
 class FromRational a where
@@ -119,7 +117,7 @@ instance (HasResolution a) => FromRational (Fixed a) where
     fromRational = Prelude.fromRational
 
 -----------------------------------------
--- Types
+-- Types & Helpers
 -----------------------------------------
 
 newtype NonZero a = NonZero { getNonZero :: a }
@@ -137,6 +135,16 @@ newtype Sum a = Sum { getSum :: a }
 newtype Product a = Product { getProduct :: a }
     deriving stock (Show)
     deriving newtype (PartialEq, Eq)
+
+-- | Adapted from GHC.Internal.Real
+-- 'reduce' is a subsidiary function used only in this module.
+-- It normalises a ratio by dividing both numerator and denominator by
+-- their greatest common divisor.
+reduce ::  (FromInteger a, Eq a, EuclideanSemiring a) => a -> a -> Ratio a
+-- {-# SPECIALISE reduce :: Integer -> Integer -> Rational #-}
+reduce _ 0 = GHC.Real.ratioZeroDenominatorError
+reduce x y = (x `quot` d) :% (y `quot` d)
+    where d = NonZero (gcd x y)
 
 -----------------------------------------
 -- Semigroup
@@ -190,12 +198,12 @@ instance Semigroup (Sum Natural) where
     (<>) = coerce ((Prelude.+) :: Natural -> Natural -> Natural)
     {-# INLINE (<>) #-}
 
-instance Semigroup (Sum Float) where
-    (<>) = coerce ((Prelude.+) :: Float -> Float -> Float)
+instance (HasResolution a) => Semigroup (Sum (Fixed a)) where
+    (<>) = coerce ((Prelude.+) :: Fixed a -> Fixed a -> Fixed a)
     {-# INLINE (<>) #-}
 
-instance Semigroup (Sum Double) where
-    (<>) = coerce ((Prelude.+) :: Double -> Double -> Double)
+instance (FromInteger a, Eq a, EuclideanSemiring a) => Semigroup (Sum (Ratio a)) where
+    (Sum (x :% y)) <> (Sum (x' :% y')) = Sum (reduce (x * y' + x' * y) (y * y'))
     {-# INLINE (<>) #-}
 
 instance Semigroup (Product Int) where
@@ -246,12 +254,8 @@ instance Semigroup (Product Natural) where
     (<>) = coerce ((Prelude.*) :: Natural -> Natural -> Natural)
     {-# INLINE (<>) #-}
 
-instance Semigroup (Product Float) where
-    (<>) = coerce ((Prelude.*) :: Float -> Float -> Float)
-    {-# INLINE (<>) #-}
-
-instance Semigroup (Product Double) where
-    (<>) = coerce ((Prelude.*) :: Double -> Double -> Double)
+instance (EuclideanSemiring a, FromInteger a, Eq a) => Semigroup (Product (Ratio a)) where
+    (Product (x :%  y)) <> (Product (x' :% y')) = Product (reduce (x * x') (y * y'))
     {-# INLINE (<>) #-}
 
 -----------------------------------------
@@ -294,11 +298,8 @@ instance Monoid (Sum Integer) where
 instance Monoid (Sum Natural) where
     mempty = Sum 0
 
-instance Monoid (Sum Float) where
-    mempty = Sum 0
-
-instance Monoid (Sum Double) where
-    mempty = Sum 0
+instance (FromInteger a, Eq a, EuclideanSemiring a) => Monoid (Sum (Ratio a)) where
+    mempty = Sum (0 :% 1)
 
 instance Monoid (Product Int) where
     mempty = Product 1
@@ -336,11 +337,8 @@ instance Monoid (Product Integer) where
 instance Monoid (Product Natural) where
     mempty = Product 1
 
-instance Monoid (Product Float) where
-    mempty = Product 1
-
-instance Monoid (Product Double) where
-    mempty = Product 1
+instance (FromInteger a, Eq a, EuclideanSemiring a) => Monoid (Product (Ratio a)) where
+    mempty = Product (1 :% 1)
 
 -----------------------------------------
 -- Group
@@ -363,16 +361,24 @@ instance Group (Sum Int) where
     inverse = coerce (Prelude.negate :: Int -> Int)
     {-# INLINE inverse #-}
 
+instance Group (Sum Int8) where
+    inverse = coerce (Prelude.negate :: Int8 -> Int8)
+    {-# INLINE inverse #-}
+
+instance Group (Sum Int16) where
+    inverse = coerce (Prelude.negate :: Int16 -> Int16)
+    {-# INLINE inverse #-}
+
+instance Group (Sum Int32) where
+    inverse = coerce (Prelude.negate :: Int32 -> Int32)
+    {-# INLINE inverse #-}
+
+instance Group (Sum Int64) where
+    inverse = coerce (Prelude.negate :: Int64 -> Int64)
+    {-# INLINE inverse #-}
+
 instance Group (Sum Integer) where
     inverse = coerce (Prelude.negate :: Integer -> Integer)
-    {-# INLINE inverse #-}
-
-instance Group (Sum Double) where
-    inverse = coerce (Prelude.negate :: Double -> Double)
-    {-# INLINE inverse #-}
-
-instance Group (Product Double) where
-    inverse = coerce (Prelude.recip :: Double -> Double)
     {-# INLINE inverse #-}
 
 -----------------------------------------
@@ -385,8 +391,6 @@ class (Group a) => CommutativeGroup a where
 
 instance CommutativeGroup (Sum Int)
 instance CommutativeGroup (Sum Integer)
-instance CommutativeGroup (Sum Double)
-instance CommutativeGroup (Product Double)
 
 -----------------------------------------
 -- Semiring
@@ -414,7 +418,6 @@ instance Semiring Int
 instance Semiring Word
 instance Semiring Integer
 instance Semiring Natural
-instance Semiring Double
 
 -----------------------------------------
 -- Ring
@@ -427,7 +430,6 @@ class (Semiring a, CommutativeGroup (Sum a)) => Ring a where
 
 instance Ring Int
 instance Ring Integer
-instance Ring Double
 
 -----------------------------------------
 -- Commutative Ring
@@ -437,7 +439,6 @@ class (Ring a) => CommutativeRing a where
     -- a * b = b * a
 
 instance CommutativeRing Integer
-instance CommutativeRing Double
 
 -----------------------------------------
 -- GCD Semiring
@@ -483,14 +484,6 @@ class (GcdSemiring a) => EuclideanSemiring a where
     divMod :: a -> NonZero a -> (a, a)
     degree :: a -> Natural
 
--- | 'reduce' is a subsidiary function used only in this module.
--- It normalises a ratio by dividing both numerator and denominator by
--- their greatest common divisor.
--- reduce ::  (EuclideanSemiring a) => a -> a -> Ratio a
--- {-# SPECIALISE reduce :: Integer -> Integer -> Rational #-}
--- reduce _ 0              =  ratioZeroDenominatorError
--- reduce x y              =  (x `quot` d) :% (y `quot` d)
---                            where d = NonZero (gcd x y)
 
 instance EuclideanSemiring Int where 
     quotRem x y = Prelude.quotRem x (coerce y)
@@ -509,9 +502,6 @@ class (Ring a) => DivisionRing a where
 -- unsafeDiv x y
 --     | y == zero = error "Divide by zero"
 --     | otherwise = x / coerce y
-
-instance DivisionRing Double where
-    x / y = (Prelude./) x (coerce y)
 
 -----------------------------------------
 -- Domain
@@ -536,13 +526,13 @@ type GcdDomain a = (IntegralDomain a, GcdSemiring a)
 -- Euclidean (Ring) Domain
 -----------------------------------------
 
-type EuclideanRing a = (GcdDomain a, EuclideanSemiring a)
+type EuclideanDomain a = (GcdDomain a, EuclideanSemiring a)
 
 -----------------------------------------
 -- Field
 -----------------------------------------
 
-type Field a = (DivisionRing a, EuclideanRing a)
+type Field a = (DivisionRing a, EuclideanDomain a)
 
 -----------------------------------------
 -- Unsafe

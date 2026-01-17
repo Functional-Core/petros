@@ -4,7 +4,5 @@ module Petros.Algebra.Field
     ( Field
     ) where
 
-import Petros.Algebra.EuclideanRing (EuclideanRing)
-import Petros.Algebra.DivisionRing (DivisionRing)
+import Petros.Algebra.Internal (Field)
 
-type Field a = (DivisionRing a, EuclideanRing a)
